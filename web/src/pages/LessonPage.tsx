@@ -44,13 +44,11 @@ export default function LessonPage() {
   const [markingComplete, setMarkingComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const authHeaders = { Authorization: `Bearer ${token}` };
-
   const fetchCourse = useCallback(async () => {
     if (!courseSlug || !token) return;
     try {
       const res = await fetch(`${API}/api/academy/courses/${courseSlug}`, {
-        headers: authHeaders,
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to load course');
       const data = await res.json();
@@ -89,7 +87,7 @@ export default function LessonPage() {
     try {
       await fetch(`${API}/api/academy/lessons/${currentLesson.id}/complete`, {
         method: 'POST',
-        headers: authHeaders,
+        headers: { Authorization: `Bearer ${token}` },
       });
       setCurrentLesson((prev) => (prev ? { ...prev, completed: true } : prev));
 

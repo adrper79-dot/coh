@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -53,7 +53,7 @@ export default function BookingPage() {
   const service = SERVICES.find((s) => s.id === selectedService);
   const isReady = selectedService && selectedDate && selectedTime;
 
-  const next14 = Array.from({ length: 14 }).map((_, i) => {
+  const next14 = useMemo(() => Array.from({ length: 14 }).map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     return {
@@ -62,7 +62,7 @@ export default function BookingPage() {
       num: d.getDate(),
       month: d.toLocaleDateString('en-US', { month: 'short' }),
     };
-  });
+  }), []);
 
   return (
     <div style={{ backgroundColor: '#F5ECD7', minHeight: '100vh' }}>

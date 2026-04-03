@@ -68,16 +68,15 @@ export default function AdminCoursePage() {
   const [createError, setCreateError] = useState('');
   const [createSuccess, setCreateSuccess] = useState('');
 
-  const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-
   const fetchData = useCallback(async () => {
     if (!token || user?.role !== 'admin') return;
     setLoading(true);
+    const authHeader = { Authorization: `Bearer ${token}` };
     try {
       const [analyticsRes, coursesRes, enrollmentsRes] = await Promise.all([
-        fetch(`${API}/api/admin/analytics`, { headers: authHeaders }),
-        fetch(`${API}/api/admin/courses`, { headers: authHeaders }),
-        fetch(`${API}/api/admin/enrollments?limit=50`, { headers: authHeaders }),
+        fetch(`${API}/api/admin/analytics`, { headers: authHeader }),
+        fetch(`${API}/api/admin/courses`, { headers: authHeader }),
+        fetch(`${API}/api/admin/enrollments?limit=50`, { headers: authHeader }),
       ]);
 
       if (analyticsRes.ok) setAnalytics(await analyticsRes.json());
@@ -99,7 +98,7 @@ export default function AdminCoursePage() {
     try {
       await fetch(`${API}/api/admin/courses/${course.id}/publish`, {
         method: 'POST',
-        headers: authHeaders,
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ publish: !course.isPublished }),
       });
       setCourses((prev) =>
@@ -124,7 +123,7 @@ export default function AdminCoursePage() {
     try {
       const res = await fetch(`${API}/api/admin/courses`, {
         method: 'POST',
-        headers: authHeaders,
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(newCourse),
       });
       if (!res.ok) {

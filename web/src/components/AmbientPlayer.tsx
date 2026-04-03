@@ -43,7 +43,9 @@ export default function AmbientPlayer() {
   const [progress, setProgress] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
-  const [isSpinning, setIsSpinning] = useState(false);
+
+  // Derived — no extra state needed
+  const isSpinning = isPlaying && !isMuted;
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const track = PLAYLIST[trackIdx];
@@ -77,26 +79,24 @@ export default function AmbientPlayer() {
     };
   }, [nextTrack]);
 
-  // — Reload + autoplay when track changes
+  // — Set initial volume once on mount
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = 0.55;
+  }, []);
+
+  // — Sync mute state
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.muted = isMuted;
+  }, [isMuted]);
+
+  // — Reload + autoplay when track changes (isPlaying intentionally excluded:
+  //    we read it at call time to resume playback, not re-run when it changes)
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     audio.load();
     if (isPlaying) audio.play().catch(() => setIsPlaying(false));
   }, [trackIdx]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // — Sync mute state + set initial volume
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.muted = isMuted;
-      audioRef.current.volume = 0.55;
-    }
-  }, [isMuted]);
-
-  // — Drive vinyl spin CSS class
-  useEffect(() => {
-    setIsSpinning(isPlaying && !isMuted);
-  }, [isPlaying, isMuted]);
 
   const togglePlay = () => {
     const audio = audioRef.current;

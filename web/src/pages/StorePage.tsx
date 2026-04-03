@@ -13,6 +13,9 @@ const PRODUCTS = [
   {
     id: '1',
     name: 'The Cipher of Healing — Course',
+    slug: 'cipher-of-healing-course',
+    categoryId: 'course',
+    image: '',
     price: 197,
     category: 'course',
     featured: true,
@@ -23,6 +26,9 @@ const PRODUCTS = [
   {
     id: '2',
     name: 'Restoration Oil — Signature Blend',
+    slug: 'restoration-oil-signature',
+    categoryId: 'oils',
+    image: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&auto=format&fit=crop&q=80',
     price: 42,
     category: 'oils',
     featured: false,
@@ -33,6 +39,9 @@ const PRODUCTS = [
   {
     id: '3',
     name: 'Restoration Oil — Growth Formula',
+    slug: 'restoration-oil-growth',
+    categoryId: 'oils',
+    image: 'https://images.unsplash.com/photo-1585751119414-ef2636f8aede?w=600&auto=format&fit=crop&q=80',
     price: 38,
     category: 'oils',
     featured: false,
@@ -43,6 +52,9 @@ const PRODUCTS = [
   {
     id: '4',
     name: 'The Cipher of Healing — Book',
+    slug: 'cipher-of-healing-book',
+    categoryId: 'books',
+    image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&auto=format&fit=crop&q=80',
     price: 24,
     category: 'books',
     featured: false,
@@ -53,6 +65,9 @@ const PRODUCTS = [
   {
     id: '5',
     name: 'Barbershop Grooming Kit',
+    slug: 'barbershop-grooming-kit',
+    categoryId: 'kits',
+    image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=600&auto=format&fit=crop&q=80',
     price: 89,
     category: 'kits',
     featured: false,
@@ -63,6 +78,9 @@ const PRODUCTS = [
   {
     id: '6',
     name: 'The Trigger Tracker — Journal',
+    slug: 'trigger-tracker-journal',
+    categoryId: 'books',
+    image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&auto=format&fit=crop&q=80',
     price: 18,
     category: 'books',
     featured: false,
@@ -73,6 +91,9 @@ const PRODUCTS = [
   {
     id: '7',
     name: 'Styling Balm — The Factory Formula',
+    slug: 'styling-balm-factory',
+    categoryId: 'oils',
+    image: 'https://images.unsplash.com/photo-1562004760-aceed7bb0fe3?w=600&auto=format&fit=crop&q=80',
     price: 28,
     category: 'oils',
     featured: false,
@@ -83,6 +104,9 @@ const PRODUCTS = [
   {
     id: '8',
     name: 'Legacy Letter Workbook',
+    slug: 'legacy-letter-workbook',
+    categoryId: 'books',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
     price: 22,
     category: 'books',
     featured: false,
@@ -258,7 +282,7 @@ export default function StorePage() {
                     ${featured.price}
                   </span>
                   <button
-                    onClick={() => addItem(featured as any, 1)}
+                    onClick={() => addItem(featured, 1)}
                     className="px-8 py-3 uppercase text-sm tracking-widest transition-opacity hover:opacity-80"
                     style={{
                       fontFamily: 'DM Sans, sans-serif',
@@ -294,13 +318,18 @@ export default function StorePage() {
                   border: '1px solid #8B5E3C',
                 }}
               >
-                {/* Sepia placeholder image */}
-                <div
-                  className="h-36 flex items-center justify-center"
-                  style={{ backgroundColor: '#704214', filter: 'sepia(0.4) brightness(0.9) contrast(1.1)' }}
-                >
-                  <span style={{ fontSize: '2.5rem', opacity: 0.5 }}>◯</span>
-                </div>
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-40 object-cover"
+                    style={{ filter: 'sepia(0.45) contrast(1.12) brightness(0.78) saturate(0.65)' }}
+                  />
+                ) : (
+                  <div className="h-40 flex items-center justify-center" style={{ backgroundColor: '#704214' }}>
+                    <span style={{ fontSize: '2.5rem', opacity: 0.4 }}>◯</span>
+                  </div>
+                )}
                 <div className="p-6 flex flex-col flex-1">
                   <p
                     className="text-xs uppercase tracking-widest mb-2"
@@ -328,7 +357,7 @@ export default function StorePage() {
                       ${product.price}
                     </span>
                     <button
-                      onClick={() => addItem(product as any, 1)}
+                      onClick={() => addItem(product, 1)}
                       className="transition-colors"
                       style={{
                         fontFamily: 'DM Sans, sans-serif',

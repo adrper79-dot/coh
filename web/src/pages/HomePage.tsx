@@ -215,16 +215,21 @@ function Lineage() {
                   className="h-full p-6 transition-all duration-300"
                   style={{
                     backgroundColor: '#E8DCBE',
+                    color: '#3D2B1F',
                     border: '1px solid #8B5E3C',
                     borderRadius: '3px',
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = '#2C1810';
-                    (e.currentTarget as HTMLElement).style.borderColor = '#C9A84C';
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.backgroundColor = '#2C1810';
+                    el.style.borderColor = '#C9A84C';
+                    el.style.color = '#F5ECD7';
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = '#E8DCBE';
-                    (e.currentTarget as HTMLElement).style.borderColor = '#8B5E3C';
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.backgroundColor = '#E8DCBE';
+                    el.style.borderColor = '#8B5E3C';
+                    el.style.color = '#3D2B1F';
                   }}
                 >
                   <div
@@ -239,7 +244,7 @@ function Lineage() {
                     {s.num}
                   </div>
                   <h3
-                    className="mb-2 group-hover:text-gold-DEFAULT transition-colors"
+                    className="mb-2 transition-colors"
                     style={{
                       fontFamily: '"Playfair Display", Georgia, serif',
                       fontSize: '16px',
@@ -255,7 +260,7 @@ function Lineage() {
                       fontSize: '12px',
                       lineHeight: 1.7,
                       color: 'inherit',
-                      opacity: 0.75,
+                      opacity: 0.8,
                     }}
                   >
                     {s.desc}
@@ -284,12 +289,27 @@ function Lineage() {
 
 // ——— Movement 3: The Craft ———
 function TheCraft() {
-  // Placeholder cards — in production replace with real barbershop photography
   const shots = [
-    { label: 'The Consultation', sub: 'Before the blade — the conversation' },
-    { label: 'The Fade',         sub: 'Precision is care made visible' },
-    { label: 'The Line-Up',      sub: 'Edges sharp enough to declare intention' },
-    { label: 'The Restoration',  sub: 'Oil, blade, and steady hands' },
+    {
+      label: 'The Consultation',
+      sub: 'Before the blade — the conversation',
+      photo: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&auto=format&fit=crop&q=80',
+    },
+    {
+      label: 'The Fade',
+      sub: 'Precision is care made visible',
+      photo: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=600&auto=format&fit=crop&q=80',
+    },
+    {
+      label: 'The Line-Up',
+      sub: 'Edges sharp enough to declare intention',
+      photo: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=600&auto=format&fit=crop&q=80',
+    },
+    {
+      label: 'The Restoration',
+      sub: 'Oil, blade, and steady hands',
+      photo: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=600&auto=format&fit=crop&q=80',
+    },
   ];
 
   return (
@@ -321,12 +341,17 @@ function TheCraft() {
                 className="relative overflow-hidden"
                 style={{ aspectRatio: '3/4', borderRadius: '3px' }}
               >
-                {/* Placeholder sepia panel — replace with <img className="parks-img"> */}
+                <img
+                  src={s.photo}
+                  alt={s.label}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ filter: 'sepia(0.5) contrast(1.15) brightness(0.72) saturate(0.6)' }}
+                />
                 <div
                   className="absolute inset-0 flex flex-col justify-end p-4"
                   style={{
                     background:
-                      'linear-gradient(160deg, #3D2B1F 0%, #1A0E09 55%, #2C1810 100%)',
+                      'linear-gradient(to top, rgba(26,14,9,0.88) 0%, rgba(26,14,9,0.25) 55%, transparent 100%)',
                     border: '1px solid rgba(201,168,76,0.15)',
                   }}
                 >

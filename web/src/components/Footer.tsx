@@ -29,8 +29,8 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
         display: 'inline-block',
         lineHeight: '1.8',
       }}
-      onMouseEnter={(e) => ((e.target as HTMLElement).style.color = '#E8DCBE')}
-      onMouseLeave={(e) => ((e.target as HTMLElement).style.color = '#8B5E3C')}
+      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#E8DCBE')}
+      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#8B5E3C')}
     >
       {children}
     </Link>

@@ -18,6 +18,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "types": ["vite/client"],
+    "ignoreDeprecations": "5.0",
+
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
