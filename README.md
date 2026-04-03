@@ -1,11 +1,139 @@
-# CypherOfHealing.com — Platform API
+# CypherOfHealing.com — Full-Stack Platform
 
 > "The outer is a reflection of the inner." — Classic Man frequency
 
-Five-stream personal brand platform: Booking, Store, Academy, Webinars, Consultations.  
-Built on **Cloudflare Workers + Hono + Drizzle ORM + Neon Postgres + Stripe**.
+**Five-stream personal brand platform**: Booking, Store, Academy, Webinars, Consultations  
+**Built on**: Cloudflare Workers + Hono + React + Vite + Drizzle ORM + Neon Postgres + Stripe
 
-## Quick Start (GitHub Codespace)
+## 🚀 Deployment Status
+
+| Component | Status | Deploy URL |
+|-----------|--------|-----------|
+| **Backend API** | ✅ Ready | Cloudflare Workers |
+| **Frontend** | ✅ Ready | Cloudflare Pages |
+| **Automation** | ✅ Setup | GitHub Actions (auto-deploy on push) |
+| **Database** | ⚙️ Config | Neon Postgres via Hyperdrive |
+| **Secrets** | ⚙️ Config | Wrangler Secrets |
+
+## 📚 Documentation
+
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Step-by-step deployment guide
+- **[DEPLOYMENT-STATUS.md](DEPLOYMENT-STATUS.md)** - Complete build & deployment status  
+- **[GITHUB-ACTIONS-SETUP.md](GITHUB-ACTIONS-SETUP.md)** - Auto-deployment configuration
+- **[SECURITY.md](SECURITY.md)** - Security best practices
+- **[FULLSTACK-README.md](FULLSTACK-README.md)** - Full architecture guide
+- **[GETTING-STARTED.md](GETTING-STARTED.md)** - Local development setup
+
+## ⚡ Quick Deploy
+
+### Option A: Automatic (Recommended)
+Add GitHub secrets and every push auto-deploys:
+```bash
+# See GITHUB-ACTIONS-SETUP.md for full instructions
+```
+
+### Option B: Manual Deployment Script
+```bash
+./deploy.sh YOUR_CLOUDFLARE_API_TOKEN YOUR_ACCOUNT_ID
+```
+
+### Option C: GitHub UI Integration
+1. Go to https://dash.cloudflare.com/?to=/:account/pages
+2. Click "Connect to Git"
+3. Select this repository
+4. Set build: `cd web && npm run build` → output: `web/dist`
+
+## 🏗️ Project Structure
+
+```
+coh/
+├── src/                      # Backend API (Hono)
+│   ├── routes/              # API endpoints
+│   ├── middleware/          # Global middleware
+│   ├── db/                  # Database (Drizzle)
+│   └── types/               # TypeScript types
+│
+├── web/                     # Frontend (React + Vite)
+│   ├── src/
+│   │   ├── pages/          # 6 page components
+│   │   ├── components/     # Reusable UI components
+│   │   └── stores/         # Zustand state management
+│   └── vite.config.ts
+│
+├── .github/workflows/       # GitHub Actions CI/CD
+├── wrangler.jsonc          # Cloudflare config
+└── drizzle.config.ts       # Database config
+```
+
+## 🛠️ Local Development
+
+```bash
+# Install dependencies
+npm install && cd web && npm install
+
+# Start backend dev server
+npm run dev
+
+# In another terminal, start frontend
+cd web && npm run dev
+
+# Type checking
+npm run typecheck
+
+# Build for production
+npm run deploy          # Backend
+cd web && npm run build # Frontend
+```
+
+## 🔐 Configuration
+
+### Environment Variables
+Copy `.env.example` to `.env` for local development:
+```bash
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
+JWT_SECRET=your-secret-here
+STRIPE_SECRET_KEY=sk_test_...
+```
+
+### Production Secrets (Wrangler)
+Set these in Cloudflare dashboard:
+```bash
+npx wrangler secret put STRIPE_SECRET_KEY
+npx wrangler secret put STRIPE_WEBHOOK_SECRET
+npx wrangler secret put JWT_SECRET
+npx wrangler secret put DATABASE_URL
+npx wrangler secret put RESEND_API_KEY
+```
+
+## 📦 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 18, Vite, Tailwind CSS, Framer Motion |
+| **Backend** | Hono.js, TypeScript |
+| **Hosting** | Cloudflare Workers + Pages |
+| **Database** | Neon Postgres + Drizzle ORM |
+| **Sessions** | Cloudflare KV |
+| **Storage** | Cloudflare R2 |
+| **Payments** | Stripe |
+| **Email** | Resend |
+| **CI/CD** | GitHub Actions |
+
+## ✅ Quality Assurance
+
+```bash
+# Type checking
+npm run typecheck        # ✅ 0 errors
+
+# Build verification
+cd web && npm run build  # ✅ Success
+npx wrangler deploy --dry-run  # ✅ Success
+
+# Git status
+git status              # ✅ Clean (all committed)
+```
+
+## 🚀 Quick Start (GitHub Codespace)
 
 ```bash
 # 1. Install dependencies
