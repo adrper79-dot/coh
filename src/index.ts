@@ -28,7 +28,11 @@ app.use('*', async (c, next) => {
   });
   return corsMiddleware(c, next);
 });
-success: true,
+
+// ─── Health check / Root endpoint ───
+app.get('/', (c) => {
+  return c.json({
+    success: true,
     data: {
       name: 'CypherOfHealing API',
       version: '1.0.0',
@@ -61,23 +65,24 @@ app.get('/api/docs', (c) => {
       baseUrl: '/api',
       authentication: {
         type: 'Bearer JWT',
-        header: '
-    success: true,
-    data: { received: true },
-  });
-});
-
-// ─── 404 handler ───
-app.notFound((c) => {
-  return errorResponse(c, {
-    code: ErrorCodes.NOT_FOUND,
-    message: 'Endpoint not found. The path you seek does not exist.',
-    status: 404,
-  });
-});
-
-// ─── Error handler ───
-app.onError(createErrorHandler(isDev)         methods: ['GET /events', 'POST /registrations'],
+        header: 'Authorization: Bearer <token>',
+      },
+      endpoints: {
+        booking: {
+          description: 'Booking service for consultations',
+          methods: ['GET /slots', 'POST /book', 'GET /my-bookings'],
+        },
+        store: {
+          description: 'E-commerce store for products',
+          methods: ['GET /products', 'POST /cart', 'POST /checkout'],
+        },
+        academy: {
+          description: 'Online learning platform',
+          methods: ['GET /courses', 'GET /modules/:courseId', 'POST /enroll'],
+        },
+        events: {
+          description: 'Events and webinars',
+          methods: ['GET /events', 'POST /register'],
         },
       },
       responseFormat: {
@@ -96,8 +101,30 @@ app.onError(createErrorHandler(isDev)         methods: ['GET /events', 'POST /re
             requestId: 'uuid',
           },
         },
-      }
-      booking: '/api/booking',
+      },
+    },
+  });
+});
+
+// ─── API Routes ───
+app.route('/api/booking', booking);
+app.route('/api/store', store);
+app.route('/api/academy', academy);
+app.route('/api/events', events);
+
+// ─── 404 handler ───
+app.notFound((c) => {
+  return errorResponse(c, {
+    code: ErrorCodes.NOT_FOUND,
+    message: 'Endpoint not found. The path you seek does not exist.',
+    status: 404,
+  });
+});
+
+// ─── Error handler ───
+app.onError(createErrorHandler(isDev));
+
+export default app;
       store: '/api/store',
       academy: '/api/academy',
       events: '/api/events',
