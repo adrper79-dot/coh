@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiErrors } from './errors';
+import { ErrorCodes } from '../middleware/errors';
 
 /**
  * Safe validation function that returns errors in ApiError format
@@ -14,7 +14,9 @@ export async function validateData<T>(schema: z.ZodSchema<T>, data: any): Promis
         const path = error.path.join('.');
         details[path] = error.message;
       });
-      throw ApiErrors.validationError(details);
+      const error = new Error(JSON.stringify(details));
+      error.name = ErrorCodes.VALIDATION_ERROR;
+      throw error;
     }
     throw err;
   }

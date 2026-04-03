@@ -1,5 +1,5 @@
 import { Context, Next } from 'hono';
-import { v4 as uuidv4 } from 'nanoid';
+import { nanoid } from 'nanoid';
 
 /**
  * Unified API response format for consistency and better DX
@@ -25,7 +25,7 @@ export interface ApiResponse<T = any> {
  * Response helper for consistent success responses
  */
 export function successResponse<T>(data: T, c: Context, { status = 200, message = '' } = {}) {
-  const requestId = c.get('requestId') || uuidv4();
+  const requestId = c.get('requestId') || nanoid();
   return c.json(
     {
       success: true,
@@ -36,7 +36,7 @@ export function successResponse<T>(data: T, c: Context, { status = 200, message 
         version: '1.0.0',
       },
     } as ApiResponse<T>,
-    status
+    status as any
   );
 }
 
@@ -57,7 +57,7 @@ export function errorResponse(
     details?: Record<string, string>;
   } = {}
 ) {
-  const requestId = c.get('requestId') || uuidv4();
+  const requestId = c.get('requestId') || nanoid();
   return c.json(
     {
       success: false,
@@ -69,7 +69,7 @@ export function errorResponse(
         requestId,
       },
     } as ApiResponse,
-    status
+    status as any
   );
 }
 
@@ -78,7 +78,7 @@ export function errorResponse(
  */
 export function responseMiddleware() {
   return async (c: Context, next: Next) => {
-    const requestId = uuidv4();
+    const requestId = nanoid();
     c.set('requestId', requestId);
     c.set('successResponse', (data: any, opts = {}) => successResponse(data, c, opts));
     c.set('errorResponse', (opts = {}) => errorResponse(c, opts));

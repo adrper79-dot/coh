@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
+import { nanoid } from 'nanoid';
 import type { Env, Variables } from './types/env';
 import { responseMiddleware, errorResponse } from './middleware/response';
 import { createErrorHandler, ErrorCodes } from './middleware/errors';
@@ -48,7 +49,7 @@ app.get('/', (c) => {
     },
     meta: {
       timestamp: new Date().toISOString(),
-      requestId: c.get('requestId'),
+      requestId: nanoid(),
       version: '1.0.0',
     },
   });
