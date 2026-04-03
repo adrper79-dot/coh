@@ -6,10 +6,34 @@ export default function BookingPage() {
   const [selectedService, setSelectedService] = useState('');
 
   const services = [
-    { id: '1', name: 'Initial Consultation', duration: 60, price: 150 },
-    { id: '2', name: 'Follow-up Session', duration: 45, price: 100 },
-    { id: '3', name: 'Energy Healing', duration: 90, price: 200 },
-    { id: '4', name: 'Group Workshop', duration: 120, price: 50 },
+    {
+      id: '1',
+      name: 'The Chair — Signature Session',
+      duration: 60,
+      price: 75,
+      description: 'The full barbershop experience rooted in the lineage. Precision cut, beard work, and restoration oil treatment. The consultation is part of the session.',
+    },
+    {
+      id: '2',
+      name: 'The Cipher Consultation',
+      duration: 90,
+      price: 150,
+      description: 'One-on-one with the Cypher. Deep, deliberate healing work — the ancient relationship of healer and seeker, restored. Includes a personalized Cipher framework session.',
+    },
+    {
+      id: '3',
+      name: 'The Chair + Cipher',
+      duration: 120,
+      price: 200,
+      description: 'The complete offering. Begin in the chair, end with the cipher. Grooming and healing as one act — because they always were.',
+    },
+    {
+      id: '4',
+      name: 'Follow-Up Session',
+      duration: 45,
+      price: 60,
+      description: 'Return to the chair. Continue the work. Maintain what you are building.',
+    },
   ];
 
   return (
@@ -20,9 +44,13 @@ export default function BookingPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-12"
         >
+          <div className="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4 uppercase tracking-widest">
+            The Chair
+          </div>
           <h1 className="text-5xl font-serif font-bold mb-4">Book Your Session</h1>
-          <p className="text-xl text-dark-600">
-            Schedule a personal session with our experienced practitioners
+          <p className="text-xl text-dark-600 max-w-2xl">
+            Before the blade touches skin, there is always a consultation. Sit down. The barber's
+            first act is to ask what you are carrying and what you are ready to release.
           </p>
         </motion.div>
 
@@ -45,9 +73,14 @@ export default function BookingPage() {
                     }`}
                   >
                     <div className="font-bold mb-1">{service.name}</div>
-                    <div className="text-sm text-dark-600">
+                    <div className="text-sm text-dark-600 mb-2">
                       {service.duration} min • ${service.price}
                     </div>
+                    {'description' in service && (
+                      <div className="text-xs text-dark-500 leading-relaxed">
+                        {(service as any).description}
+                      </div>
+                    )}
                   </motion.button>
                 ))}
               </div>

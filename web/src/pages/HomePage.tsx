@@ -59,16 +59,16 @@ export default function HomePage() {
 
           <motion.div variants={itemVariants} className="flex justify-center gap-8 text-sm text-dark-600 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="text-primary-500 text-xl">★</span>
-              5000+ Students Transformed
+              <span className="text-primary-500 text-xl">◆</span>
+              The Chair. The Vault. The Academy.
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-primary-500 text-xl">★</span>
-              15+ Years of Experience
+              <span className="text-primary-500 text-xl">◆</span>
+              The Stage. The Inner Circle.
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-primary-500 text-xl">★</span>
-              98% Satisfaction Rate
+              <span className="text-primary-500 text-xl">◆</span>
+              One cipher. Step in.
             </div>
           </motion.div>
         </motion.div>
@@ -102,34 +102,34 @@ export default function HomePage() {
             {[
               {
                 title: 'The Chair',
-                description: 'Personalized 1-on-1 consultations with deep healing work',
-                icon: '🪑',
+                description: 'The barbershop session as sanctuary. Precision work attended to with care — and a conversation that goes wherever it needs to go.',
+                icon: '✂️',
                 link: '/booking',
                 highlight: 'Most Popular',
               },
               {
                 title: 'The Vault',
-                description: 'Curated transformational products & tools for your journey',
-                icon: '🏺',
+                description: 'Restoration oils, books, journals, and grooming kits. Extensions of the healing, not retail products.',
+                icon: '🫙',
                 link: '/store',
               },
               {
                 title: 'The Academy',
-                description: 'Self-paced courses to master consciousness & healing',
-                icon: '📚',
+                description: 'The Cipher of Healing: Transforming Trauma into Resilience. Six stations. 12–18 hours. A process, not a product.',
+                icon: '◯',
                 link: '/academy',
                 highlight: 'Best Value',
               },
               {
                 title: 'The Stage',
-                description: 'Live webinars & group experiences for collective growth',
-                icon: '🎭',
+                description: 'The Open Cipher — live webinars, workshops, and summits. The circle, open. Anyone can step in.',
+                icon: '✦',
                 link: '/events',
               },
               {
                 title: 'The Inner Circle',
-                description: 'Exclusive VIP membership, retreats & direct access',
-                icon: '💎',
+                description: 'Quarterly gatherings, direct access, and the retreat at The Factory. The cipher, sustained.',
+                icon: '◆',
                 link: '/events',
                 highlight: 'Premium',
               },
@@ -185,10 +185,10 @@ export default function HomePage() {
             className="text-center mb-16"
           >
             <h2 className="text-5xl md:text-6xl font-serif font-bold mb-6 text-dark-900">
-              Transformations From Our Community
+              From the Cipher
             </h2>
             <p className="text-xl text-dark-700">
-              Real stories from people like you who've experienced profound healing
+              What happens when a man sits down in the chair and lets the healing begin
             </p>
           </motion.div>
 
@@ -201,21 +201,21 @@ export default function HomePage() {
           >
             {[
               {
-                quote: "This journey transformed not just my mind, but my entire reality. I feel like a completely different person.",
-                author: "Sarah M.",
-                role: "Academy Student",
+                quote: "I came in for a cut and left having talked about my father for the first time in years. That's not a barbershop. That's a sanctuary.",
+                author: "Marcus T.",
+                role: "The Chair",
                 rating: 5,
               },
               {
-                quote: "The consultations provided clarity I've been searching for years. Truly life-changing work.",
-                author: "James K.",
-                role: "1-on-1 Client",
+                quote: "Station 3 broke something open in me. I finally understood why I react the way I do. The Trigger Tracker changed my relationships.",
+                author: "DeShawn W.",
+                role: "The Academy",
                 rating: 5,
               },
               {
-                quote: "The products in the Vault are incredible. Each one has brought such depth to my practice.",
-                author: "Elena R.",
-                role: "Store Customer",
+                quote: "The restoration oil sits on my bathroom shelf. Every morning I use it, I remember — I am worth this care even when no one is watching.",
+                author: "Jordan M.",
+                role: "The Vault",
                 rating: 5,
               },
             ].map((testimonial, idx) => (
@@ -253,7 +253,7 @@ export default function HomePage() {
             className="text-center mb-16"
           >
             <h2 className="text-5xl md:text-6xl font-serif font-bold mb-6 text-dark-900">
-              Measurable Impact & Results
+              The Lineage. The Platform. The Work.
             </h2>
           </motion.div>
 
@@ -265,10 +265,10 @@ export default function HomePage() {
             viewport={{ once: true }}
           >
             {[
-              { number: '5000+', label: 'Students Transformed' },
-              { number: '15+', label: 'Years of Experience' },
-              { number: '98%', label: 'Satisfaction Rate' },
-              { number: '4.9/5', label: 'Average Rating' },
+              { number: '6', label: 'Stations of Restoration' },
+              { number: '5', label: 'Streams of Access' },
+              { number: '1', label: 'Ancient Lineage — Restored' },
+              { number: '◯', label: 'The cipher is open' },
             ].map((stat, idx) => (
               <motion.div
                 key={idx}
@@ -299,10 +299,10 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-5xl md:text-6xl font-serif font-bold mb-6">
-            Your Transformation Begins Now
+            The cipher is open.<br />Step in.
           </h2>
           <p className="text-xl md:text-2xl mb-10 text-primary-100 font-light">
-            Join thousands who've discovered their inner truth and outer manifestation
+            Once you are in the cipher, you are held. And what is held can heal.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/booking" className="btn bg-white text-primary-600 hover:bg-dark-50 text-lg px-8 py-4">
