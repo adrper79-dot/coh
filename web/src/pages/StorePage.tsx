@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCartStore } from '@/stores/cart';
+import { storeApi } from '@/lib/api';
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -9,126 +10,72 @@ const fade = (delay = 0) => ({
   transition: { duration: 0.6, delay, ease: 'easeOut' },
 });
 
-const PRODUCTS = [
-  {
-    id: '1',
-    name: 'The Cipher of Healing — Course',
-    slug: 'cipher-of-healing-course',
-    categoryId: 'course',
-    image: '',
-    price: 197,
-    category: 'course',
-    featured: true,
-    description:
-      'The full 6-station self-paced course: Transforming Trauma into Resilience. 12–18 hours of deep work. Tools, exercises, guided practices, and your Legacy Letter framework — all included.',
-    detail: 'Self-paced · 6 Stations · Lifetime Access',
-  },
-  {
-    id: '2',
-    name: 'Restoration Oil — Signature Blend',
-    slug: 'restoration-oil-signature',
-    categoryId: 'oils',
-    image: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&auto=format&fit=crop&q=80',
-    price: 42,
-    category: 'oils',
-    featured: false,
-    description:
-      'The barbershop formulation used in every session. Beard and scalp restoration oil. When you apply it yourself, the healing continues.',
-    detail: '2 fl oz · Cold-Pressed · No Sulfates',
-  },
-  {
-    id: '3',
-    name: 'Restoration Oil — Growth Formula',
-    slug: 'restoration-oil-growth',
-    categoryId: 'oils',
-    image: 'https://images.unsplash.com/photo-1585751119414-ef2636f8aede?w=600&auto=format&fit=crop&q=80',
-    price: 38,
-    category: 'oils',
-    featured: false,
-    description:
-      'Strengthening and nourishing oil for hair and beard. A daily ritual of care made tangible.',
-    detail: '2 fl oz · Cold-Pressed · Botanical Formula',
-  },
-  {
-    id: '4',
-    name: 'The Cipher of Healing — Book',
-    slug: 'cipher-of-healing-book',
-    categoryId: 'books',
-    image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&auto=format&fit=crop&q=80',
-    price: 24,
-    category: 'books',
-    featured: false,
-    description:
-      'The companion text to the course. A guide to decoding the language of your own life — the code, the zero, and the circle.',
-    detail: 'Hardcover · 240 pages',
-  },
-  {
-    id: '5',
-    name: 'Barbershop Grooming Kit',
-    slug: 'barbershop-grooming-kit',
-    categoryId: 'kits',
-    image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=600&auto=format&fit=crop&q=80',
-    price: 89,
-    category: 'kits',
-    featured: false,
-    description:
-      'The full setup: restoration oil, edge brush, beard comb, and styling balm. To care for your appearance is not vanity — it is declaration.',
-    detail: '4 Pieces · Gift-Boxed',
-  },
-  {
-    id: '6',
-    name: 'The Trigger Tracker — Journal',
-    slug: 'trigger-tracker-journal',
-    categoryId: 'books',
-    image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&auto=format&fit=crop&q=80',
-    price: 18,
-    category: 'books',
-    featured: false,
-    description:
-      'The physical Trigger Tracker and Awareness Journal from Station 3. Track your responses, decode your patterns, begin to choose.',
-    detail: '120 Pages · Lay-Flat Binding',
-  },
-  {
-    id: '7',
-    name: 'Styling Balm — The Factory Formula',
-    slug: 'styling-balm-factory',
-    categoryId: 'oils',
-    image: 'https://images.unsplash.com/photo-1562004760-aceed7bb0fe3?w=600&auto=format&fit=crop&q=80',
-    price: 28,
-    category: 'oils',
-    featured: false,
-    description:
-      'Medium-hold styling balm with restorative botanicals. Finish your look. Declare your intention.',
-    detail: '3 oz · Medium Hold · Matte Finish',
-  },
-  {
-    id: '8',
-    name: 'Legacy Letter Workbook',
-    slug: 'legacy-letter-workbook',
-    categoryId: 'books',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
-    price: 22,
-    category: 'books',
-    featured: false,
-    description:
-      'The guided workbook for crafting your Legacy Letter and Cipher Statement from Station 6. What you pass down. What you choose to end.',
-    detail: '80 Pages · Guided Prompts',
-  },
-];
+interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  image: string;
+  categoryId: string;
+  featured?: boolean;
+  detail?: string;
+}
 
-const CATS = [
-  { id: 'all',    label: 'All' },
-  { id: 'course', label: 'Course' },
-  { id: 'oils',   label: 'Oils & Grooming' },
-  { id: 'kits',   label: 'Kits' },
-  { id: 'books',  label: 'Books & Journals' },
-];
+interface Category {
+  id: string;
+  label: string;
+  name?: string;
+}
 
 export default function StorePage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
+  
   const [filter, setFilter] = useState('all');
   const addItem = useCartStore((state) => state.addItem);
 
-  const filtered = filter === 'all' ? PRODUCTS : PRODUCTS.filter((p) => p.category === filter);
+  // Load products and categories on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setProductsLoading(true);
+        const [productsData, categoriesData] = await Promise.all([
+          storeApi.listProducts(),
+          storeApi.listCategories(),
+        ]);
+
+        const prods = (productsData as unknown as Product[]) || [];
+        const cats = (categoriesData as unknown as any[]) || [];
+
+        // Transform categories to match UI format
+        const transformedCats: Category[] = [
+          { id: 'all', label: 'All' },
+          ...cats.map((c) => ({ id: c.id, label: c.name || c.label })),
+        ];
+
+        setProducts(prods);
+        setCategories(transformedCats);
+        setProductsError(null);
+      } catch (err: any) {
+        const msg = err?.message || 'Failed to load products';
+        setProductsError(msg);
+        console.error('Failed to load products:', err);
+        
+        // Fallback to empty state
+        setProducts([]);
+        setCategories([{ id: 'all', label: 'All' }]);
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const filtered = filter === 'all' ? products : products.filter((p) => p.categoryId === filter);
   const featured = filtered.find((p) => p.featured);
   const rest = filtered.filter((p) => !p.featured);
 
@@ -185,7 +132,7 @@ export default function StorePage() {
       >
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex gap-0 overflow-x-auto">
-            {CATS.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setFilter(cat.id)}
@@ -218,172 +165,249 @@ export default function StorePage() {
 
       <div className="max-w-5xl mx-auto px-6 py-14">
 
-        {/* Featured card (Course) */}
-        <AnimatePresence>
-          {featured && (
-            <motion.div
-              key={featured.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              className="mb-12 flex flex-col md:flex-row overflow-hidden"
-              style={{
-                backgroundColor: '#E8DCBE',
-                border: '1px solid #8B5E3C',
-                borderLeft: '5px solid #C9A84C',
-              }}
-            >
-              {/* Illustration panel */}
-              <div
-                className="md:w-56 shrink-0 flex items-center justify-center"
-                style={{ backgroundColor: '#2C1810', minHeight: '180px' }}
-              >
-                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                  <circle cx="40" cy="40" r="38" stroke="#C9A84C" strokeWidth="1.5" />
-                  <circle cx="40" cy="40" r="28" stroke="#C9A84C" strokeWidth="1" />
-                  <circle cx="40" cy="40" r="18" stroke="#C9A84C" strokeWidth="0.8" />
-                  <circle cx="40" cy="40" r="4" fill="#C9A84C" />
-                </svg>
-              </div>
-              {/* Details */}
-              <div className="flex-1 p-8 flex flex-col justify-between">
-                <div>
-                  <p
-                    className="uppercase text-xs tracking-widest mb-3"
-                    style={{ fontFamily: 'DM Sans, sans-serif', color: '#8B5E3C' }}
+        {/* Loading state */}
+        {productsLoading && (
+          <motion.div
+            {...fade()}
+            className="text-center py-12"
+            style={{
+              fontFamily: '"Libre Baskerville", serif',
+              color: '#704214',
+            }}
+          >
+            Loading the vault...
+          </motion.div>
+        )}
+
+        {/* Error state */}
+        {productsError && (
+          <motion.div
+            {...fade()}
+            className="px-6 py-4 text-sm mb-8"
+            style={{
+              backgroundColor: 'rgba(160, 82, 45, 0.15)',
+              border: '1px solid #A0522D',
+              color: '#704214',
+              fontFamily: '"DM Sans", sans-serif',
+            }}
+          >
+            {productsError}
+          </motion.div>
+        )}
+
+        {!productsLoading && products.length === 0 && !productsError && (
+          <motion.div
+            {...fade()}
+            className="text-center py-12"
+            style={{
+              fontFamily: '"Libre Baskerville", serif',
+              color: '#704214',
+            }}
+          >
+            No products available at this time.
+          </motion.div>
+        )}
+
+        {!productsLoading && products.length > 0 && (
+          <>
+            {/* Featured card (Course) */}
+            <AnimatePresence>
+              {featured && (
+                <motion.div
+                  key={featured.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="mb-12 flex flex-col md:flex-row overflow-hidden"
+                  style={{
+                    backgroundColor: '#E8DCBE',
+                    border: '1px solid #8B5E3C',
+                    borderLeft: '5px solid #C9A84C',
+                  }}
+                >
+                  {/* Illustration panel */}
+                  <div
+                    className="md:w-56 shrink-0 flex items-center justify-center"
+                    style={{ backgroundColor: '#2C1810', minHeight: '180px' }}
                   >
-                    Featured · The Course
-                  </p>
-                  <h2
-                    className="text-2xl md:text-3xl font-bold mb-3"
-                    style={{ fontFamily: '"Playfair Display", serif', color: '#2C1810' }}
-                  >
-                    {featured.name}
-                  </h2>
-                  <p
-                    className="leading-relaxed mb-4"
-                    style={{ fontFamily: '"Libre Baskerville", serif', fontSize: '0.95rem', color: '#3D2B1F' }}
-                  >
-                    {featured.description}
-                  </p>
-                  <p
-                    className="text-xs"
-                    style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#704214' }}
-                  >
-                    {featured.detail}
-                  </p>
-                </div>
-                <div className="flex items-center gap-6 mt-6">
-                  <span
-                    className="text-3xl font-bold"
-                    style={{ fontFamily: 'DM Sans, sans-serif', color: '#2C1810' }}
-                  >
-                    ${featured.price}
-                  </span>
-                  <button
-                    onClick={() => addItem(featured, 1)}
-                    className="px-8 py-3 uppercase text-sm tracking-widest transition-opacity hover:opacity-80"
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                      <circle cx="40" cy="40" r="38" stroke="#C9A84C" strokeWidth="1.5" />
+                      <circle cx="40" cy="40" r="28" stroke="#C9A84C" strokeWidth="1" />
+                      <circle cx="40" cy="40" r="18" stroke="#C9A84C" strokeWidth="0.8" />
+                      <circle cx="40" cy="40" r="4" fill="#C9A84C" />
+                    </svg>
+                  </div>
+                  {/* Details */}
+                  <div className="flex-1 p-8 flex flex-col justify-between">
+                    <div>
+                      <p
+                        className="uppercase text-xs tracking-widest mb-3"
+                        style={{ fontFamily: 'DM Sans, sans-serif', color: '#8B5E3C' }}
+                      >
+                        Featured · The Course
+                      </p>
+                      <h2
+                        className="text-2xl md:text-3xl font-bold mb-3"
+                        style={{ fontFamily: '"Playfair Display", serif', color: '#2C1810' }}
+                      >
+                        {featured.name}
+                      </h2>
+                      <p
+                        className="leading-relaxed mb-4"
+                        style={{
+                          fontFamily: '"Libre Baskerville", serif',
+                          fontSize: '0.95rem',
+                          color: '#3D2B1F',
+                        }}
+                      >
+                        {featured.description}
+                      </p>
+                      {featured.detail && (
+                        <p
+                          className="text-xs"
+                          style={{
+                            fontFamily: '"IBM Plex Mono", monospace',
+                            color: '#704214',
+                          }}
+                        >
+                          {featured.detail}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-6 mt-6">
+                      <span
+                        className="text-3xl font-bold"
+                        style={{ fontFamily: 'DM Sans, sans-serif', color: '#2C1810' }}
+                      >
+                        ${featured.price}
+                      </span>
+                      <button
+                        onClick={() => addItem(featured, 1)}
+                        className="px-8 py-3 uppercase text-sm tracking-widest transition-opacity hover:opacity-80"
+                        style={{
+                          fontFamily: 'DM Sans, sans-serif',
+                          backgroundColor: '#C9A84C',
+                          color: '#2C1810',
+                          fontWeight: 700,
+                          letterSpacing: '0.1em',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Add to Vault
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Product grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <AnimatePresence>
+                {rest.map((product, i) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4, delay: i * 0.05 }}
+                    className="flex flex-col overflow-hidden"
                     style={{
-                      fontFamily: 'DM Sans, sans-serif',
-                      backgroundColor: '#C9A84C',
-                      color: '#2C1810',
-                      fontWeight: 700,
-                      letterSpacing: '0.1em',
-                      border: 'none',
-                      cursor: 'pointer',
+                      backgroundColor: '#E8DCBE',
+                      border: '1px solid #8B5E3C',
                     }}
                   >
-                    Add to Vault
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Product grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <AnimatePresence>
-            {rest.map((product, i) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="flex flex-col overflow-hidden"
-                style={{
-                  backgroundColor: '#E8DCBE',
-                  border: '1px solid #8B5E3C',
-                }}
-              >
-                {product.image ? (
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    loading="lazy"
-                    className="w-full h-40 object-cover"
-                    style={{ filter: 'sepia(0.45) contrast(1.12) brightness(0.78) saturate(0.65)' }}
-                  />
-                ) : (
-                  <div className="h-40 flex items-center justify-center" style={{ backgroundColor: '#704214' }}>
-                    <span style={{ fontSize: '2.5rem', opacity: 0.4 }}>◯</span>
-                  </div>
-                )}
-                <div className="p-6 flex flex-col flex-1">
-                  <p
-                    className="text-xs uppercase tracking-widest mb-2"
-                    style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#8B5E3C' }}
-                  >
-                    {product.detail}
-                  </p>
-                  <h3
-                    className="font-bold text-lg mb-3 leading-snug"
-                    style={{ fontFamily: '"Playfair Display", serif', color: '#2C1810' }}
-                  >
-                    {product.name}
-                  </h3>
-                  <p
-                    className="text-sm leading-relaxed mb-5 flex-1"
-                    style={{ fontFamily: '"Libre Baskerville", serif', color: '#3D2B1F' }}
-                  >
-                    {product.description}
-                  </p>
-                  <div className="flex items-center justify-between mt-auto">
-                    <span
-                      className="text-xl font-bold"
-                      style={{ fontFamily: 'DM Sans, sans-serif', color: '#2C1810' }}
-                    >
-                      ${product.price}
-                    </span>
-                    <button
-                      onClick={() => addItem(product, 1)}
-                      className="transition-colors"
-                      style={{
-                        fontFamily: 'DM Sans, sans-serif',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        color: '#C9A84C',
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                        textDecorationColor: 'transparent',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.textDecorationColor = '#C9A84C')}
-                      onMouseLeave={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
-                    >
-                      Add to Vault →
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        loading="lazy"
+                        className="w-full h-40 object-cover"
+                        style={{
+                          filter:
+                            'sepia(0.45) contrast(1.12) brightness(0.78) saturate(0.65)',
+                        }}
+                      />
+                    ) : (
+                      <div
+                        className="h-40 flex items-center justify-center"
+                        style={{ backgroundColor: '#704214' }}
+                      >
+                        <span style={{ fontSize: '2.5rem', opacity: 0.4 }}>◯</span>
+                      </div>
+                    )}
+                    <div className="p-6 flex flex-col flex-1">
+                      {product.detail && (
+                        <p
+                          className="text-xs uppercase tracking-widest mb-2"
+                          style={{
+                            fontFamily: '"IBM Plex Mono", monospace',
+                            color: '#8B5E3C',
+                          }}
+                        >
+                          {product.detail}
+                        </p>
+                      )}
+                      <h3
+                        className="font-bold text-lg mb-3 leading-snug"
+                        style={{
+                          fontFamily: '"Playfair Display", serif',
+                          color: '#2C1810',
+                        }}
+                      >
+                        {product.name}
+                      </h3>
+                      <p
+                        className="text-sm leading-relaxed mb-5 flex-1"
+                        style={{
+                          fontFamily: '"Libre Baskerville", serif',
+                          color: '#3D2B1F',
+                        }}
+                      >
+                        {product.description}
+                      </p>
+                      <div className="flex items-center justify-between mt-auto">
+                        <span
+                          className="text-xl font-bold"
+                          style={{ fontFamily: 'DM Sans, sans-serif', color: '#2C1810' }}
+                        >
+                          ${product.price}
+                        </span>
+                        <button
+                          onClick={() => addItem(product, 1)}
+                          className="transition-colors"
+                          style={{
+                            fontFamily: 'DM Sans, sans-serif',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase',
+                            color: '#C9A84C',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                            textDecorationColor: 'transparent',
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.textDecorationColor = '#C9A84C')
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.textDecorationColor = 'transparent')
+                          }
+                        >
+                          Add to Vault →
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </>
+        )}
 
         {/* Manifesto quote */}
         <motion.div
@@ -394,7 +418,14 @@ export default function StorePage() {
           <div className="absolute inset-0 pointer-events-none" aria-hidden style={{ opacity: 0.05 }}>
             <svg width="100%" height="100%">
               <defs>
-                <pattern id="store-quote-pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                <pattern
+                  id="store-quote-pattern"
+                  x="0"
+                  y="0"
+                  width="100"
+                  height="100"
+                  patternUnits="userSpaceOnUse"
+                >
                   <circle cx="50" cy="50" r="46" fill="none" stroke="#C9A84C" strokeWidth="0.6" />
                   <circle cx="50" cy="50" r="32" fill="none" stroke="#C9A84C" strokeWidth="0.4" />
                 </pattern>
@@ -404,7 +435,11 @@ export default function StorePage() {
           </div>
           <p
             className="text-xs uppercase tracking-widest mb-6"
-            style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C', letterSpacing: '0.25em' }}
+            style={{
+              fontFamily: 'DM Sans, sans-serif',
+              color: '#C9A84C',
+              letterSpacing: '0.25em',
+            }}
           >
             From the Manifesto
           </p>
@@ -418,7 +453,11 @@ export default function StorePage() {
           </blockquote>
           <p
             className="text-xs tracking-widest"
-            style={{ fontFamily: 'DM Sans, sans-serif', color: '#8B5E3C', letterSpacing: '0.15em' }}
+            style={{
+              fontFamily: 'DM Sans, sans-serif',
+              color: '#8B5E3C',
+              letterSpacing: '0.15em',
+            }}
           >
             — The Cipher of Healing
           </p>

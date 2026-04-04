@@ -1,5 +1,8 @@
 import { motion } from 'framer-motion';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { bookingApi } from '@/lib/api';
+import { useAuthStore } from '@/stores/auth';
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -8,49 +11,82 @@ const fade = (delay = 0) => ({
   transition: { duration: 0.6, delay, ease: 'easeOut' },
 });
 
-const SERVICES = [
-  {
-    id: '1',
-    name: 'The Chair — Signature Session',
-    duration: '60 min',
-    price: 75,
-    description:
-      'The full barbershop experience rooted in the lineage. Precision cut, beard work, and restoration oil treatment. The consultation is part of the session.',
-  },
-  {
-    id: '2',
-    name: 'The Cipher Consultation',
-    duration: '90 min',
-    price: 150,
-    description:
-      'One-on-one with the Cypher. Deep, deliberate healing work — the ancient relationship of healer and seeker, restored. Includes a personalized Cipher framework session.',
-  },
-  {
-    id: '3',
-    name: 'The Chair + Cipher',
-    duration: '120 min',
-    price: 200,
-    description:
-      'The complete offering. Begin in the chair, end with the cipher. Grooming and healing as one act — because they always were.',
-  },
-  {
-    id: '4',
-    name: 'Follow-Up Session',
-    duration: '45 min',
-    price: 60,
-    description:
-      'Return to the chair. Continue the work. Maintain what you are building.',
-  },
-];
+interface Service {
+  id: string;
+  name: string;
+  duration: string;
+  price: number;
+  description: string;
+}
 
-const TIME_SLOTS = ['9:00 AM', '10:30 AM', '12:00 PM', '1:30 PM', '3:00 PM', '4:30 PM', '6:00 PM'];
+interface AvailabilitySlot {
+  time: string;
+  available: boolean;
+}
 
 export default function BookingPage() {
+  const [services, setServices] = useState<Service[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [servicesError, setServicesError] = useState<string | null>(null);
+  
   const [selectedService, setSelectedService] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedTime, setSelectedTime] = useState('');
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const service = SERVICES.find((s) => s.id === selectedService);
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+
+  // Load services on mount
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        setServicesLoading(true);
+        const data = (await bookingApi.listServices()) as unknown as Service[];
+        setServices(data || []);
+        setServicesError(null);
+      } catch (err: any) {
+        const msg = err?.message || 'Failed to load services';
+        setServicesError(msg);
+        console.error('Failed to load services:', err);
+      } finally {
+        setServicesLoading(false);
+      }
+    };
+
+    loadServices();
+  }, []);
+
+  // Load availability when service or date changes
+  useEffect(() => {
+    if (!selectedService || !selectedDate) {
+      setAvailableSlots([]);
+      return;
+    }
+
+    const loadAvailability = async () => {
+      try {
+        setSlotsLoading(true);
+        const data = (await bookingApi.getAvailability(selectedService, selectedDate)) as unknown as AvailabilitySlot[];
+        setAvailableSlots(data || []);
+        setSelectedTime(''); // Reset time when date changes
+      } catch (err: any) {
+        console.error('Failed to load availability:', err);
+        // Fallback to empty slots
+        setAvailableSlots([]);
+      } finally {
+        setSlotsLoading(false);
+      }
+    };
+
+    loadAvailability();
+  }, [selectedService, selectedDate]);
+
+  const service = services.find((s) => s.id === selectedService);
   const isReady = selectedService && selectedDate && selectedTime;
 
   const next14 = useMemo(() => Array.from({ length: 14 }).map((_, i) => {
@@ -63,6 +99,39 @@ export default function BookingPage() {
       month: d.toLocaleDateString('en-US', { month: 'short' }),
     };
   }), []);
+
+  const handleConfirmSession = async () => {
+    if (!isReady || !user) {
+      if (!user) navigate('/login');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setSubmitError(null);
+
+      // Combine date and time into ISO datetime
+      const [hours, minutes] = selectedTime.match(/\d+/g)!.map(Number);
+      const isAM = selectedTime.includes('AM');
+      const hour24 = isAM && hours === 12 ? 0 : !isAM && hours !== 12 ? hours + 12 : hours;
+      
+      const scheduledAt = new Date(`${selectedDate}T${String(hour24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00Z`);
+
+      await bookingApi.createAppointment({
+        serviceId: selectedService,
+        scheduledAt: scheduledAt.toISOString(),
+      });
+
+      // Navigate to confirmation page or dashboard
+      navigate('/'); // Or redirect to appointments page once created
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to create appointment';
+      setSubmitError(msg);
+      console.error('Failed to create appointment:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div style={{ backgroundColor: '#F5ECD7', minHeight: '100vh' }}>
@@ -125,68 +194,91 @@ export default function BookingPage() {
               >
                 01 — Select a Service
               </p>
-              <div className="space-y-3">
-                {SERVICES.map((svc) => {
-                  const active = selectedService === svc.id;
-                  return (
-                    <button
-                      key={svc.id}
-                      onClick={() => setSelectedService(svc.id)}
-                      className="w-full text-left transition-all"
-                      style={{
-                        padding: '1.25rem 1.5rem',
-                        border: active ? '2px solid #C9A84C' : '1px solid #8B5E3C',
-                        backgroundColor: active ? '#2C1810' : '#E8DCBE',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <h3
-                            className="font-bold mb-1"
-                            style={{
-                              fontFamily: '"Playfair Display", serif',
-                              fontSize: '1.05rem',
-                              color: active ? '#F5ECD7' : '#2C1810',
-                            }}
-                          >
-                            {svc.name}
-                          </h3>
-                          <p
-                            className="text-sm leading-relaxed"
-                            style={{
-                              fontFamily: '"Libre Baskerville", serif',
-                              color: active ? '#E8DCBE' : '#3D2B1F',
-                            }}
-                          >
-                            {svc.description}
-                          </p>
+
+              {servicesError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="px-4 py-3 text-sm mb-4"
+                  style={{
+                    backgroundColor: 'rgba(160, 82, 45, 0.15)',
+                    border: '1px solid #A0522D',
+                    color: '#704214',
+                    fontFamily: '"DM Sans", sans-serif',
+                  }}
+                >
+                  {servicesError}
+                </motion.div>
+              )}
+
+              {servicesLoading ? (
+                <div style={{ color: '#704214', fontFamily: '"Libre Baskerville", serif' }}>
+                  Loading services...
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {services.map((svc) => {
+                    const active = selectedService === svc.id;
+                    return (
+                      <button
+                        key={svc.id}
+                        onClick={() => setSelectedService(svc.id)}
+                        className="w-full text-left transition-all"
+                        style={{
+                          padding: '1.25rem 1.5rem',
+                          border: active ? '2px solid #C9A84C' : '1px solid #8B5E3C',
+                          backgroundColor: active ? '#2C1810' : '#E8DCBE',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <h3
+                              className="font-bold mb-1"
+                              style={{
+                                fontFamily: '"Playfair Display", serif',
+                                fontSize: '1.05rem',
+                                color: active ? '#F5ECD7' : '#2C1810',
+                              }}
+                            >
+                              {svc.name}
+                            </h3>
+                            <p
+                              className="text-sm leading-relaxed"
+                              style={{
+                                fontFamily: '"Libre Baskerville", serif',
+                                color: active ? '#E8DCBE' : '#3D2B1F',
+                              }}
+                            >
+                              {svc.description}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p
+                              className="font-bold text-lg"
+                              style={{
+                                fontFamily: 'DM Sans, sans-serif',
+                                color: active ? '#C9A84C' : '#2C1810',
+                              }}
+                            >
+                              ${svc.price}
+                            </p>
+                            <p
+                              className="text-xs mt-0.5"
+                              style={{
+                                fontFamily: '"IBM Plex Mono", monospace',
+                                color: active ? '#8B5E3C' : '#704214',
+                              }}
+                            >
+                              {svc.duration}
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p
-                            className="font-bold text-lg"
-                            style={{
-                              fontFamily: 'DM Sans, sans-serif',
-                              color: active ? '#C9A84C' : '#2C1810',
-                            }}
-                          >
-                            ${svc.price}
-                          </p>
-                          <p
-                            className="text-xs mt-0.5"
-                            style={{
-                              fontFamily: '"IBM Plex Mono", monospace',
-                              color: active ? '#8B5E3C' : '#704214',
-                            }}
-                          >
-                            {svc.duration}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
 
             {/* Step 2 — Date */}
@@ -256,29 +348,41 @@ export default function BookingPage() {
               >
                 03 — Select a Time
               </p>
-              <div className="flex flex-wrap gap-3">
-                {TIME_SLOTS.map((slot) => {
-                  const active = selectedTime === slot;
-                  return (
-                    <button
-                      key={slot}
-                      onClick={() => setSelectedTime(slot)}
-                      className="transition-all"
-                      style={{
-                        padding: '0.5rem 1.25rem',
-                        border: active ? '2px solid #C9A84C' : '1px solid #8B5E3C',
-                        backgroundColor: active ? '#2C1810' : '#E8DCBE',
-                        cursor: 'pointer',
-                        fontFamily: '"IBM Plex Mono", monospace',
-                        fontSize: '0.85rem',
-                        color: active ? '#C9A84C' : '#2C1810',
-                      }}
-                    >
-                      {slot}
-                    </button>
-                  );
-                })}
-              </div>
+              {slotsLoading ? (
+                <div style={{ color: '#704214', fontFamily: '"Libre Baskerville", serif' }}>
+                  Loading available slots...
+                </div>
+              ) : availableSlots.length === 0 && selectedDate ? (
+                <div style={{ color: '#704214', fontFamily: '"Libre Baskerville", serif' }}>
+                  No available slots for this date. Please try another date.
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  {availableSlots
+                    .filter((slot) => slot.available)
+                    .map((slot) => {
+                      const active = selectedTime === slot.time;
+                      return (
+                        <button
+                          key={slot.time}
+                          onClick={() => setSelectedTime(slot.time)}
+                          className="transition-all"
+                          style={{
+                            padding: '0.5rem 1.25rem',
+                            border: active ? '2px solid #C9A84C' : '1px solid #8B5E3C',
+                            backgroundColor: active ? '#2C1810' : '#E8DCBE',
+                            cursor: 'pointer',
+                            fontFamily: '"IBM Plex Mono", monospace',
+                            fontSize: '0.85rem',
+                            color: active ? '#C9A84C' : '#2C1810',
+                          }}
+                        >
+                          {slot.time}
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
             </motion.div>
 
           </div>
@@ -305,6 +409,22 @@ export default function BookingPage() {
                   <circle cx="32" cy="32" r="3" fill="#C9A84C" opacity="0.5" />
                 </svg>
               </div>
+
+              {submitError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="px-3 py-2 text-xs mb-4"
+                  style={{
+                    backgroundColor: 'rgba(160, 82, 45, 0.15)',
+                    border: '1px solid #A0522D',
+                    color: '#E8DCBE',
+                    fontFamily: '"DM Sans", sans-serif',
+                  }}
+                >
+                  {submitError}
+                </motion.div>
+              )}
 
               {service ? (
                 <div className="space-y-4 mb-8">
@@ -339,22 +459,23 @@ export default function BookingPage() {
               )}
 
               <button
-                disabled={!isReady}
+                disabled={!isReady || isSubmitting}
+                onClick={handleConfirmSession}
                 className="w-full py-4 uppercase tracking-widest text-sm transition-opacity"
                 style={{
                   fontFamily: 'DM Sans, sans-serif',
                   fontWeight: 700,
                   letterSpacing: '0.1em',
-                  backgroundColor: isReady ? '#C9A84C' : '#3D2B1F',
-                  color: isReady ? '#2C1810' : '#704214',
+                  backgroundColor: isReady && !isSubmitting ? '#C9A84C' : '#3D2B1F',
+                  color: isReady && !isSubmitting ? '#2C1810' : '#704214',
                   border: 'none',
-                  cursor: isReady ? 'pointer' : 'not-allowed',
+                  cursor: isReady && !isSubmitting ? 'pointer' : 'not-allowed',
                 }}
               >
-                {isReady ? 'Confirm Session' : 'Select All Fields'}
+                {isSubmitting ? 'Confirming...' : isReady ? 'Confirm Session' : 'Select All Fields'}
               </button>
 
-              {isReady && (
+              {isReady && !submitError && (
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

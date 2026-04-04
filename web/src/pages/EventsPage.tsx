@@ -1,5 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { eventsApi } from '@/lib/api';
+import { useAuthStore } from '@/stores/auth';
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -8,112 +11,116 @@ const fade = (delay = 0) => ({
   transition: { duration: 0.6, delay, ease: 'easeOut' },
 });
 
-const EVENTS = [
-  {
-    id: '1',
-    title: 'The Open Cipher — Monthly Webinar',
-    type: 'webinar',
-    typeLabel: 'The Open Cipher',
-    date: '2026-04-15',
-    month: 'APR',
-    day: '15',
-    time: '7:00 PM EST',
-    duration: '90 minutes',
-    attendees: 120,
-    price: 0,
-    description:
-      'In hip-hop, a cipher is an open circle — anyone can step in and contribute. This monthly webinar is that circle. A live, open gathering to decode patterns, share tools, and elevate each other.',
-  },
-  {
-    id: '2',
-    title: 'Breaking the Code — Station 3 Deep Dive',
-    type: 'workshop',
-    typeLabel: 'Workshop',
-    date: '2026-04-22',
-    month: 'APR',
-    day: '22',
-    time: '6:00 PM EST',
-    duration: '2 hours',
-    attendees: 40,
-    price: 29,
-    description:
-      'A focused workshop on trauma responses and daily triggers. We\'ll build your Trigger Tracker together, live. Evidence-informed. Practically grounded.',
-  },
-  {
-    id: '3',
-    title: 'The Cipher Summit — Spring 2026',
-    type: 'summit',
-    typeLabel: 'Summit',
-    date: '2026-05-10',
-    month: 'MAY',
-    day: '10',
-    time: '10:00 AM EST',
-    duration: 'Full Day',
-    attendees: 250,
-    price: 97,
-    description:
-      'A full-day gathering of healers, barbers, and men committed to breaking generational cycles. Multi-speaker. Practical sessions. The lineage made visible.',
-  },
-  {
-    id: '4',
-    title: 'The Cipher Retreat — The Factory',
-    type: 'retreat',
-    typeLabel: 'Retreat',
-    date: '2026-06-06',
-    month: 'JUN',
-    day: '06',
-    time: 'Friday – Sunday',
-    duration: '3 days',
-    attendees: 30,
-    price: 497,
-    description:
-      'Immersive. Intimate. Three days at The Factory: the full 6-station journey delivered live, in community, with the Cypher and a cohort of 30. Applications only.',
-  },
-  {
-    id: '5',
-    title: 'Legacy Letter Workshop',
-    type: 'workshop',
-    typeLabel: 'Workshop',
-    date: '2026-04-29',
-    month: 'APR',
-    day: '29',
-    time: '7:00 PM EST',
-    duration: '2 hours',
-    attendees: 35,
-    price: 29,
-    description:
-      'Station 6 made live. We write our Legacy Letters together. You will declare what you choose to pass down and what you choose to end — in community, in the cipher.',
-  },
-  {
-    id: '6',
-    title: 'The Inner Circle — Quarterly Gathering',
-    type: 'inner-circle',
-    typeLabel: 'Inner Circle',
-    date: '2026-05-01',
-    month: 'MAY',
-    day: '01',
-    time: '6:00 PM EST',
-    duration: '3 hours',
-    attendees: 20,
-    price: 0,
-    description:
-      'Exclusive to Inner Circle members. Quarterly deep-dive with the Cypher, peer accountability, and direct access. The circle, sustained.',
-  },
-];
+interface Event {
+  id: string;
+  title: string;
+  type?: string;
+  typeLabel?: string;
+  date: string;
+  month?: string;
+  day?: string;
+  time: string;
+  duration: string;
+  attendees: number;
+  price: number;
+  description: string;
+}
 
-const TYPES = [
-  { id: 'all',          label: 'All Events' },
-  { id: 'webinar',      label: 'The Open Cipher' },
-  { id: 'workshop',     label: 'Workshops' },
-  { id: 'summit',       label: 'Summit' },
-  { id: 'retreat',      label: 'Retreat' },
-  { id: 'inner-circle', label: 'Inner Circle' },
-];
+interface EventType {
+  id: string;
+  label: string;
+}
 
 export default function EventsPage() {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventTypes, setEventTypes] = useState<EventType[]>([
+    { id: 'all', label: 'All Events' },
+  ]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  
   const [filter, setFilter] = useState('all');
+  const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [registerError, setRegisterError] = useState<string | null>(null);
 
-  const filtered = filter === 'all' ? EVENTS : EVENTS.filter((e) => e.type === filter);
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+
+  // Load events on mount
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        setEventsLoading(true);
+        const data = (await eventsApi.listEvents()) as unknown as Event[];
+        
+        // Parse dates to extract month/day
+        const processedEvents = (data || []).map((event) => {
+          const eventDate = new Date(event.date);
+          return {
+            ...event,
+            month: eventDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+            day: String(eventDate.getDate()).padStart(2, '0'),
+            type: event.type || 'other',
+            typeLabel: event.typeLabel || 'Event',
+          };
+        });
+
+        setEvents(processedEvents);
+
+        // Extract unique event types
+        const uniqueTypes = Array.from(
+          new Set(processedEvents.map((e) => e.type))
+        ).map((type) => ({
+          id: type,
+          label: type.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+        }));
+
+        setEventTypes([
+          { id: 'all', label: 'All Events' },
+          ...uniqueTypes,
+        ]);
+
+        setEventsError(null);
+      } catch (err: any) {
+        const msg = err?.message || 'Failed to load events';
+        setEventsError(msg);
+        console.error('Failed to load events:', err);
+        setEvents([]);
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
+
+  const handleRegister = async (event: Event) => {
+    if (!user) {
+      navigate('/login', { state: { redirect: '/events' } });
+      return;
+    }
+
+    try {
+      setRegisteringId(event.id);
+      setRegisterError(null);
+
+      await eventsApi.registerEvent(event.id, {
+        smsOptIn: false, // Could be a toggle
+      });
+
+      // Show success message or redirect
+      alert('You have registered for ' + event.title);
+      // Navigate to events/registrations or stay and show confirmation
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to register for event';
+      setRegisterError(msg);
+      console.error('Failed to register:', err);
+    } finally {
+      setRegisteringId(null);
+    }
+  };
+
+  const filtered = filter === 'all' ? events : events.filter((e) => e.type === filter);
 
   return (
     <div style={{ backgroundColor: '#F5ECD7', minHeight: '100vh' }}>
@@ -168,7 +175,7 @@ export default function EventsPage() {
       >
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex gap-0 overflow-x-auto">
-            {TYPES.map((type) => (
+            {eventTypes.map((type) => (
               <button
                 key={type.id}
                 onClick={() => setFilter(type.id)}
@@ -201,127 +208,218 @@ export default function EventsPage() {
 
       {/* Events list */}
       <div className="max-w-5xl mx-auto px-6 py-14">
-        <div className="space-y-5">
-          <AnimatePresence>
-            {filtered.map((event, i) => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="flex overflow-hidden"
-                style={{
-                  backgroundColor: '#E8DCBE',
-                  border: '1px solid #8B5E3C',
-                }}
-              >
-                {/* Date panel */}
-                <div
-                  className="shrink-0 w-20 flex flex-col items-center justify-center py-6"
-                  style={{ backgroundColor: '#2C1810', borderRight: '1px solid #704214' }}
-                >
-                  <span
-                    className="text-xs"
-                    style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#8B5E3C', letterSpacing: '0.1em' }}
-                  >
-                    {event.month}
-                  </span>
-                  <span
-                    className="text-3xl font-bold leading-none mt-1"
-                    style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C' }}
-                  >
-                    {event.day}
-                  </span>
-                </div>
 
-                {/* Content */}
-                <div className="flex-1 p-6 flex flex-col md:flex-row md:items-center gap-4">
-                  <div className="flex-1">
-                    {/* Type badge */}
+        {/* Loading state */}
+        {eventsLoading && (
+          <motion.div
+            {...fade()}
+            className="text-center py-12"
+            style={{
+              fontFamily: '"Libre Baskerville", serif',
+              color: '#704214',
+            }}
+          >
+            Loading events...
+          </motion.div>
+        )}
+
+        {/* Error state */}
+        {eventsError && (
+          <motion.div
+            {...fade()}
+            className="px-6 py-4 text-sm mb-8"
+            style={{
+              backgroundColor: 'rgba(160, 82, 45, 0.15)',
+              border: '1px solid #A0522D',
+              color: '#704214',
+              fontFamily: '"DM Sans", sans-serif',
+            }}
+          >
+            {eventsError}
+          </motion.div>
+        )}
+
+        {/* Register error */}
+        {registerError && (
+          <motion.div
+            {...fade()}
+            className="px-6 py-4 text-sm mb-8"
+            style={{
+              backgroundColor: 'rgba(160, 82, 45, 0.15)',
+              border: '1px solid #A0522D',
+              color: '#704214',
+              fontFamily: '"DM Sans", sans-serif',
+            }}
+          >
+            {registerError}
+          </motion.div>
+        )}
+
+        {!eventsLoading && events.length === 0 && !eventsError && (
+          <motion.div
+            {...fade()}
+            className="text-center py-12"
+            style={{
+              fontFamily: '"Libre Baskerville", serif',
+              color: '#704214',
+            }}
+          >
+            No events available at this time.
+          </motion.div>
+        )}
+
+        {!eventsLoading && events.length > 0 && (
+          <div className="space-y-5">
+            <AnimatePresence>
+              {filtered.map((event, i) => (
+                <motion.div
+                  key={event.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                  className="flex overflow-hidden"
+                  style={{
+                    backgroundColor: '#E8DCBE',
+                    border: '1px solid #8B5E3C',
+                  }}
+                >
+                  {/* Date panel */}
+                  <div
+                    className="shrink-0 w-20 flex flex-col items-center justify-center py-6"
+                    style={{ backgroundColor: '#2C1810', borderRight: '1px solid #704214' }}
+                  >
                     <span
-                      className="inline-block text-xs px-3 py-0.5 mb-3"
+                      className="text-xs"
                       style={{
-                        fontFamily: 'DM Sans, sans-serif',
-                        letterSpacing: '0.08em',
-                        border: '1px solid #8B5E3C',
-                        color: '#704214',
-                        backgroundColor: 'transparent',
+                        fontFamily: '"IBM Plex Mono", monospace',
+                        color: '#8B5E3C',
+                        letterSpacing: '0.1em',
                       }}
                     >
-                      {event.typeLabel}
+                      {event.month}
                     </span>
-                    <h3
-                      className="font-bold text-xl mb-2"
-                      style={{ fontFamily: '"Playfair Display", serif', color: '#2C1810' }}
+                    <span
+                      className="text-3xl font-bold leading-none mt-1"
+                      style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C' }}
                     >
-                      {event.title}
-                    </h3>
-                    <p
-                      className="text-sm leading-relaxed mb-3"
-                      style={{ fontFamily: '"Libre Baskerville", serif', color: '#3D2B1F', maxWidth: '560px' }}
-                    >
-                      {event.description}
-                    </p>
-                    <div className="flex flex-wrap gap-x-5 gap-y-1">
+                      {event.day}
+                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 p-6 flex flex-col md:flex-row md:items-center gap-4">
+                    <div className="flex-1">
+                      {/* Type badge */}
                       <span
-                        className="text-xs"
-                        style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#8B5E3C' }}
+                        className="inline-block text-xs px-3 py-0.5 mb-3"
+                        style={{
+                          fontFamily: 'DM Sans, sans-serif',
+                          letterSpacing: '0.08em',
+                          border: '1px solid #8B5E3C',
+                          color: '#704214',
+                          backgroundColor: 'transparent',
+                        }}
                       >
-                        {event.time}
+                        {event.typeLabel}
                       </span>
-                      <span
-                        className="text-xs"
-                        style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#8B5E3C' }}
+                      <h3
+                        className="font-bold text-xl mb-2"
+                        style={{
+                          fontFamily: '"Playfair Display", serif',
+                          color: '#2C1810',
+                        }}
                       >
-                        {event.duration}
-                      </span>
-                      <span
-                        className="text-xs"
-                        style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#8B5E3C' }}
+                        {event.title}
+                      </h3>
+                      <p
+                        className="text-sm leading-relaxed mb-3"
+                        style={{
+                          fontFamily: '"Libre Baskerville", serif',
+                          color: '#3D2B1F',
+                          maxWidth: '560px',
+                        }}
                       >
-                        {event.attendees} in the cipher
-                      </span>
+                        {event.description}
+                      </p>
+                      <div className="flex flex-wrap gap-x-5 gap-y-1">
+                        <span
+                          className="text-xs"
+                          style={{
+                            fontFamily: '"IBM Plex Mono", monospace',
+                            color: '#8B5E3C',
+                          }}
+                        >
+                          {event.time}
+                        </span>
+                        <span
+                          className="text-xs"
+                          style={{
+                            fontFamily: '"IBM Plex Mono", monospace',
+                            color: '#8B5E3C',
+                          }}
+                        >
+                          {event.duration}
+                        </span>
+                        <span
+                          className="text-xs"
+                          style={{
+                            fontFamily: '"IBM Plex Mono", monospace',
+                            color: '#8B5E3C',
+                          }}
+                        >
+                          {event.attendees} in the cipher
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Price + CTA */}
+                    <div className="shrink-0 flex flex-col items-end gap-3 md:items-end">
+                      {event.price === 0 ? (
+                        <span
+                          className="text-2xl font-bold"
+                          style={{
+                            fontFamily: 'DM Sans, sans-serif',
+                            color: '#1A3A3A',
+                          }}
+                        >
+                          FREE
+                        </span>
+                      ) : (
+                        <span
+                          className="text-2xl font-bold"
+                          style={{ fontFamily: 'DM Sans, sans-serif', color: '#2C1810' }}
+                        >
+                          ${event.price}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleRegister(event)}
+                        disabled={registeringId === event.id}
+                        className="px-6 py-2 uppercase text-xs tracking-widest transition-opacity hover:opacity-80 disabled:opacity-50"
+                        style={{
+                          fontFamily: 'DM Sans, sans-serif',
+                          fontWeight: 700,
+                          letterSpacing: '0.12em',
+                          backgroundColor: '#C9A84C',
+                          color: '#2C1810',
+                          border: 'none',
+                          cursor: registeringId === event.id ? 'wait' : 'pointer',
+                        }}
+                      >
+                        {registeringId === event.id
+                          ? 'Registering...'
+                          : event.type === 'retreat'
+                          ? 'Apply'
+                          : 'Register'}
+                      </button>
                     </div>
                   </div>
-
-                  {/* Price + CTA */}
-                  <div className="shrink-0 flex flex-col items-end gap-3 md:items-end">
-                    {event.price === 0 ? (
-                      <span
-                        className="text-2xl font-bold"
-                        style={{ fontFamily: 'DM Sans, sans-serif', color: '#1A3A3A' }}
-                      >
-                        FREE
-                      </span>
-                    ) : (
-                      <span
-                        className="text-2xl font-bold"
-                        style={{ fontFamily: 'DM Sans, sans-serif', color: '#2C1810' }}
-                      >
-                        ${event.price}
-                      </span>
-                    )}
-                    <button
-                      className="px-6 py-2 uppercase text-xs tracking-widest transition-opacity hover:opacity-80"
-                      style={{
-                        fontFamily: 'DM Sans, sans-serif',
-                        fontWeight: 700,
-                        letterSpacing: '0.12em',
-                        backgroundColor: '#C9A84C',
-                        color: '#2C1810',
-                        border: 'none',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {event.type === 'retreat' || event.type === 'inner-circle' ? 'Apply' : 'Register'}
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
 
         {/* Closing cipher */}
         <motion.div
@@ -332,7 +430,14 @@ export default function EventsPage() {
           <div className="absolute inset-0 pointer-events-none" aria-hidden style={{ opacity: 0.05 }}>
             <svg width="100%" height="100%">
               <defs>
-                <pattern id="events-close-pattern" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+                <pattern
+                  id="events-close-pattern"
+                  x="0"
+                  y="0"
+                  width="120"
+                  height="120"
+                  patternUnits="userSpaceOnUse"
+                >
                   <circle cx="60" cy="60" r="56" fill="none" stroke="#C9A84C" strokeWidth="0.6" />
                   <circle cx="60" cy="60" r="38" fill="none" stroke="#C9A84C" strokeWidth="0.4" />
                 </pattern>
@@ -343,7 +448,11 @@ export default function EventsPage() {
           <div className="relative">
             <p
               className="text-xs uppercase tracking-widest mb-8"
-              style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C', letterSpacing: '0.3em' }}
+              style={{
+                fontFamily: 'DM Sans, sans-serif',
+                color: '#C9A84C',
+                letterSpacing: '0.3em',
+              }}
             >
               The cipher is open
             </p>
@@ -367,3 +476,4 @@ export default function EventsPage() {
     </div>
   );
 }
+
