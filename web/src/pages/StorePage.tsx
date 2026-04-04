@@ -322,6 +322,7 @@ export default function StorePage() {
                   <img
                     src={product.image}
                     alt={product.name}
+                    loading="lazy"
                     className="w-full h-40 object-cover"
                     style={{ filter: 'sepia(0.45) contrast(1.12) brightness(0.78) saturate(0.65)' }}
                   />

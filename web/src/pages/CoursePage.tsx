@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../stores/auth';
 
 interface Lesson {
@@ -362,29 +362,39 @@ export default function CoursePage() {
                     </span>
                   </button>
 
-                  {expandedModule === mod.id && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ borderTop: '1px solid #3D2B1F' }}>
-                      {mod.description && (
-                        <p className="px-7 py-4 text-sm" style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE' }}>{mod.description}</p>
-                      )}
-                      {mod.lessons.map((lesson) => (
-                        <div key={lesson.id} className="flex items-center gap-4 px-7 py-3 text-sm" style={{ borderTop: '1px solid #3D2B1F' }}>
-                          <span style={{ color: '#C9A84C', width: '1.25rem', textAlign: 'center', flexShrink: 0 }}>
-                            {lesson.isFree ? '▶' : '◈'}
-                          </span>
-                          <span className="flex-1" style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE' }}>{lesson.title}</span>
-                          {lesson.isFree && (
-                            <span className="text-xs px-2 py-0.5" style={{ fontFamily: 'DM Sans, sans-serif', color: '#1A3A3A', border: '1px solid #1A3A3A' }}>
-                              Free preview
+                  <AnimatePresence initial={false}>
+                    {expandedModule === mod.id && (
+                      <motion.div
+                        key="module-content"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                        style={{ borderTop: '1px solid #3D2B1F' }}
+                      >
+                        {mod.description && (
+                          <p className="px-7 py-4 text-sm" style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE' }}>{mod.description}</p>
+                        )}
+                        {mod.lessons.map((lesson) => (
+                          <div key={lesson.id} className="flex items-center gap-4 px-7 py-3 text-sm" style={{ borderTop: '1px solid #3D2B1F' }}>
+                            <span style={{ color: '#C9A84C', width: '1.25rem', textAlign: 'center', flexShrink: 0 }}>
+                              {lesson.isFree ? '▶' : '◈'}
                             </span>
-                          )}
-                          {lesson.durationMinutes && (
-                            <span className="text-xs" style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#704214' }}>{lesson.durationMinutes}m</span>
-                          )}
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
+                            <span className="flex-1" style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE' }}>{lesson.title}</span>
+                            {lesson.isFree && (
+                              <span className="text-xs px-2 py-0.5" style={{ fontFamily: 'DM Sans, sans-serif', color: '#1A3A3A', border: '1px solid #1A3A3A' }}>
+                                Free preview
+                              </span>
+                            )}
+                            {lesson.durationMinutes && (
+                              <span className="text-xs" style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#704214' }}>{lesson.durationMinutes}m</span>
+                            )}
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               ))}
             </div>

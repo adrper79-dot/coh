@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -227,44 +227,53 @@ export default function AcademyPage() {
                       </span>
                     </button>
 
-                    {isOpen && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="px-6 pb-7"
-                        style={{ borderTop: '1px solid rgba(201,168,76,0.2)' }}
-                      >
-                        <p
-                          className="mt-5 mb-5"
-                          style={{
-                            fontFamily: '"Libre Baskerville", Georgia, serif',
-                            color: '#E8DCBE',
-                            fontSize: '15px',
-                            lineHeight: 1.85,
-                          }}
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          key="content"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.28, ease: 'easeInOut' }}
+                          className="overflow-hidden"
                         >
-                          {s.desc}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {s.tools.map((t) => (
-                            <span
-                              key={t}
+                          <div
+                            className="px-6 pb-7"
+                            style={{ borderTop: '1px solid rgba(201,168,76,0.2)' }}
+                          >
+                            <p
+                              className="mt-5 mb-5"
                               style={{
-                                fontFamily: '"DM Sans", sans-serif',
-                                fontSize: '11px',
-                                color: '#C9A84C',
-                                border: '1px solid rgba(201,168,76,0.35)',
-                                borderRadius: '2px',
-                                padding: '3px 10px',
-                                letterSpacing: '0.06em',
+                                fontFamily: '"Libre Baskerville", Georgia, serif',
+                                color: '#E8DCBE',
+                                fontSize: '15px',
+                                lineHeight: 1.85,
                               }}
                             >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
+                              {s.desc}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {s.tools.map((t) => (
+                                <span
+                                  key={t}
+                                  style={{
+                                    fontFamily: '"DM Sans", sans-serif',
+                                    fontSize: '11px',
+                                    color: '#C9A84C',
+                                    border: '1px solid rgba(201,168,76,0.35)',
+                                    borderRadius: '2px',
+                                    padding: '3px 10px',
+                                    letterSpacing: '0.06em',
+                                  }}
+                                >
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </motion.div>
               );

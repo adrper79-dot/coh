@@ -24,9 +24,14 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('authToken');
-      window.location.href = '/login';
+      // Use replace to avoid pushing a new history entry
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login') {
+        window.history.replaceState(null, '', `/login?redirect=${encodeURIComponent(currentPath)}`);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
     }
-    return Promise.reject(error.response?.data || error);
+    return Promise.reject(error.response?.data ?? error);
   }
 );
 

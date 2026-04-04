@@ -344,6 +344,7 @@ function TheCraft() {
                 <img
                   src={s.photo}
                   alt={s.label}
+                  loading="lazy"
                   className="absolute inset-0 w-full h-full object-cover"
                   style={{ filter: 'sepia(0.5) contrast(1.15) brightness(0.72) saturate(0.6)' }}
                 />
