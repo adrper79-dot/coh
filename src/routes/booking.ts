@@ -3,8 +3,9 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { createDb } from '../db';
-import { services, appointments, availabilitySlots, activityLog } from '../db/schema';
+import { services, appointments, availabilitySlots, activityLog, users } from '../db/schema';
 import { authMiddleware, optionalAuth } from '../middleware/auth';
+import { sendEmail, bookingConfirmationEmail, appointmentReminderEmail } from '../utils/email';
 import type { Env, Variables } from '../types/env';
 
 const booking = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -84,35 +85,60 @@ booking.post('/appointments', authMiddleware, zValidator('json', z.object({
   const { serviceId, scheduledAt, notes } = c.req.valid('json');
   const db = createDb(c.env.HYPERDRIVE);
 
-  const service = await db.select().from(services).where(eq(services.id, serviceId)).limit(1);
-  if (!service.length) return c.json({ error: 'Service not found' }, 404);
+  try {
+    const service = await db.select().from(services).where(eq(services.id, serviceId)).limit(1);
+    if (!service.length) return c.json({ error: 'Service not found' }, 404);
 
-  const startTime = new Date(scheduledAt);
-  const endTime = new Date(startTime.getTime() + Number(service[0].durationMinutes) * 60000);
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!user.length) return c.json({ error: 'User not found' }, 404);
 
-  const [appointment] = await db.insert(appointments).values({
-    userId,
-    serviceId,
-    scheduledAt: startTime,
-    endAt: endTime,
-    notes,
-    status: 'pending',
-  }).returning();
+    const startTime = new Date(scheduledAt);
+    const endTime = new Date(startTime.getTime() + Number(service[0].durationMinutes) * 60000);
 
-  // Log activity (feeds CRM and cross-sell engine)
-  await db.insert(activityLog).values({
-    userId,
-    action: 'appointment.booked',
-    resourceType: 'appointment',
-    resourceId: appointment.id,
-    metadata: { serviceName: service[0].name, scheduledAt },
-  });
+    const [appointment] = await db.insert(appointments).values({
+      userId,
+      serviceId,
+      scheduledAt: startTime,
+      endAt: endTime,
+      notes,
+      status: 'pending',
+    }).returning();
 
-  // TODO: Create Stripe PaymentIntent for deposit
-  // TODO: Send confirmation email
-  // TODO: Schedule SMS reminder
+    // Log activity (feeds CRM and cross-sell engine)
+    await db.insert(activityLog).values({
+      userId,
+      action: 'appointment.booked',
+      resourceType: 'appointment',
+      resourceId: appointment.id,
+      metadata: { serviceName: service[0].name, scheduledAt },
+    });
 
-  return c.json({ appointment }, 201);
+    // Send confirmation email
+    const dateStr = startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const timeStr = startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const emailTemplate = bookingConfirmationEmail({
+      userName: user[0].name,
+      serviceName: service[0].name,
+      appointmentDate: dateStr,
+      appointmentTime: timeStr,
+      depositAmount: service[0].depositAmount?.toString() || '0',
+      cancelUrl: `${process.env.CORS_ORIGIN}/bookings/${appointment.id}/cancel`,
+    });
+
+    await sendEmail(c.env.RESEND_API_KEY, {
+      to: user[0].email,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
+    });
+
+    // TODO: Create Stripe PaymentIntent for deposit
+    // TODO: Schedule SMS reminder
+
+    return c.json({ appointment }, 201);
+  } catch (error) {
+    return c.json({ error: 'Failed to create appointment' }, 500);
+  }
 });
 
 // ─── Auth: Get my appointments ───

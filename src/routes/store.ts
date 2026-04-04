@@ -3,8 +3,9 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq, desc, and } from 'drizzle-orm';
 import { createDb } from '../db';
-import { products, productCategories, orders, orderItems, activityLog } from '../db/schema';
+import { products, productCategories, orders, orderItems, activityLog, users } from '../db/schema';
 import { authMiddleware, optionalAuth } from '../middleware/auth';
+import { sendEmail, orderConfirmationEmail } from '../utils/email';
 import type { Env, Variables } from '../types/env';
 
 const store = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -57,59 +58,89 @@ store.post('/orders', authMiddleware, zValidator('json', z.object({
   const { items, shippingAddress, couponCode, sourceAppointmentId } = c.req.valid('json');
   const db = createDb(c.env.HYPERDRIVE);
 
-  // Fetch products and calculate totals
-  const productIds = items.map(i => i.productId);
-  const fetchedProducts = await db.select().from(products).where(eq(products.isActive, true));
-  const productMap = new Map(fetchedProducts.filter(p => productIds.includes(p.id)).map(p => [p.id, p]));
+  try {
+    // Fetch user
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!user.length) return c.json({ error: 'User not found' }, 404);
 
-  let subtotal = 0;
-  const lineItems = items.map(item => {
-    const product = productMap.get(item.productId);
-    if (!product) throw new Error(`Product ${item.productId} not found`);
-    const lineTotal = Number(product.price) * item.quantity;
-    subtotal += lineTotal;
-    return { productId: item.productId, quantity: item.quantity, unitPrice: product.price, totalPrice: String(lineTotal) };
-  });
+    // Fetch products and calculate totals
+    const productIds = items.map(i => i.productId);
+    const fetchedProducts = await db.select().from(products).where(eq(products.isActive, true));
+    const productMap = new Map(fetchedProducts.filter(p => productIds.includes(p.id)).map(p => [p.id, p]));
 
-  // Generate order number: COH-YYYYMMDD-XXXX
-  const now = new Date();
-  const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
-  const orderNumber = `COH-${datePart}-${randomPart}`;
+    let subtotal = 0;
+    const lineItems = items.map(item => {
+      const product = productMap.get(item.productId);
+      if (!product) throw new Error(`Product ${item.productId} not found`);
+      const lineTotal = Number(product.price) * item.quantity;
+      subtotal += lineTotal;
+      return { productId: item.productId, quantity: item.quantity, unitPrice: product.price, totalPrice: String(lineTotal) };
+    });
 
-  // TODO: Apply coupon discount
-  // TODO: Calculate tax via Stripe Tax
-  // TODO: Calculate shipping
+    // Generate order number: COH-YYYYMMDD-XXXX
+    const now = new Date();
+    const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const orderNumber = `COH-${datePart}-${randomPart}`;
 
-  const [order] = await db.insert(orders).values({
-    userId,
-    orderNumber,
-    subtotal: String(subtotal),
-    total: String(subtotal),
-    shippingAddress,
-    couponCode,
-    sourceAppointmentId,
-    status: 'pending',
-  }).returning();
+    // TODO: Apply coupon discount
+    // TODO: Calculate tax via Stripe Tax
+    // TODO: Calculate shipping
 
-  // Insert line items
-  for (const item of lineItems) {
-    await db.insert(orderItems).values({ orderId: order.id, ...item });
+    const [order] = await db.insert(orders).values({
+      userId,
+      orderNumber,
+      subtotal: String(subtotal),
+      total: String(subtotal),
+      shippingAddress,
+      couponCode,
+      sourceAppointmentId,
+      status: 'pending',
+    }).returning();
+
+    // Insert line items
+    const itemsToInsert = [];
+    for (const item of lineItems) {
+      const product = productMap.get(item.productId);
+      itemsToInsert.push({
+        name: product!.name,
+        quantity: item.quantity,
+        price: Number(item.unitPrice).toFixed(2),
+      });
+      await db.insert(orderItems).values({ orderId: order.id, ...item });
+    }
+
+    // Log activity
+    await db.insert(activityLog).values({
+      userId,
+      action: 'order.created',
+      resourceType: 'order',
+      resourceId: order.id,
+      metadata: { orderNumber, total: subtotal, itemCount: items.length, sourceAppointmentId },
+    });
+
+    // Send order confirmation email
+    const emailTemplate = orderConfirmationEmail({
+      userName: user[0].name,
+      orderNumber,
+      items: itemsToInsert,
+      total: Number(subtotal).toFixed(2),
+      checkoutUrl: `${process.env.CORS_ORIGIN}/checkout/${order.id}`,
+    });
+
+    await sendEmail(c.env.RESEND_API_KEY, {
+      to: user[0].email,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
+    });
+
+    // TODO: Create Stripe Checkout Session
+
+    return c.json({ order, checkoutUrl: 'TODO_STRIPE_CHECKOUT_URL' }, 201);
+  } catch (error) {
+    return c.json({ error: 'Failed to create order' }, 500);
   }
-
-  // Log activity
-  await db.insert(activityLog).values({
-    userId,
-    action: 'order.created',
-    resourceType: 'order',
-    resourceId: order.id,
-    metadata: { orderNumber, total: subtotal, itemCount: items.length, sourceAppointmentId },
-  });
-
-  // TODO: Create Stripe Checkout Session
-  // TODO: Send order confirmation email
-
-  return c.json({ order, checkoutUrl: 'TODO_STRIPE_CHECKOUT_URL' }, 201);
 });
 
 // ─── Auth: Get my orders ───

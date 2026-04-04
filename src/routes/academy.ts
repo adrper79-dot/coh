@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { eq, and, desc } from 'drizzle-orm';
 import { createDb } from '../db';
-import { courses, courseModules, lessons, enrollments, lessonProgress, activityLog } from '../db/schema';
+import { courses, courseModules, lessons, enrollments, lessonProgress, activityLog, users } from '../db/schema';
 import { authMiddleware, optionalAuth } from '../middleware/auth';
+import { sendEmail, enrollmentConfirmationEmail } from '../utils/email';
 import type { Env, Variables } from '../types/env';
 
 const academy = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -71,33 +72,67 @@ academy.post('/courses/:slug/enroll', authMiddleware, async (c) => {
   if (!slug) return c.json({ error: 'Course slug is required' }, 400);
   const db = createDb(c.env.HYPERDRIVE);
 
-  const [course] = await db.select().from(courses).where(eq(courses.slug, slug)).limit(1);
-  if (!course) return c.json({ error: 'Course not found' }, 404);
+  try {
+    const [course] = await db.select().from(courses).where(eq(courses.slug, slug)).limit(1);
+    if (!course) return c.json({ error: 'Course not found' }, 404);
 
-  // Check if already enrolled
-  const [existing] = await db.select().from(enrollments)
-    .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, course.id)))
-    .limit(1);
-  if (existing) return c.json({ error: 'Already enrolled', enrollment: existing }, 409);
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!user) return c.json({ error: 'User not found' }, 404);
 
-  // TODO: Create Stripe Checkout Session for course purchase
-  // For now, create enrollment (will be finalized by Stripe webhook)
+    // Check if already enrolled
+    const [existing] = await db.select().from(enrollments)
+      .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, course.id)))
+      .limit(1);
+    if (existing) return c.json({ error: 'Already enrolled', enrollment: existing }, 409);
 
-  const [enrollment] = await db.insert(enrollments).values({
-    userId,
-    courseId: course.id,
-    status: 'active',
-  }).returning();
+    // Get first lesson for enrollment email
+    const moduleList = await db.select().from(courseModules)
+      .where(eq(courseModules.courseId, course.id))
+      .orderBy(courseModules.sortOrder);
+    
+    const firstLesson = moduleList.length > 0
+      ? (await db.select().from(lessons)
+          .where(eq(lessons.moduleId, moduleList[0].id))
+          .orderBy(lessons.sortOrder)
+          .limit(1))[0]
+      : null;
 
-  await db.insert(activityLog).values({
-    userId,
-    action: 'course.enrolled',
-    resourceType: 'enrollment',
-    resourceId: enrollment.id,
-    metadata: { courseTitle: course.title, courseSlug: slug },
-  });
+    // TODO: Create Stripe Checkout Session for course purchase
+    // For now, create enrollment (will be finalized by Stripe webhook)
 
-  return c.json({ enrollment, checkoutUrl: 'TODO_STRIPE_CHECKOUT_URL' }, 201);
+    const [enrollment] = await db.insert(enrollments).values({
+      userId,
+      courseId: course.id,
+      status: 'active',
+    }).returning();
+
+    await db.insert(activityLog).values({
+      userId,
+      action: 'course.enrolled',
+      resourceType: 'enrollment',
+      resourceId: enrollment.id,
+      metadata: { courseTitle: course.title, courseSlug: slug },
+    });
+
+    // Send enrollment confirmation email
+    const emailTemplate = enrollmentConfirmationEmail({
+      userName: user.name,
+      courseTitle: course.title,
+      courseUrl: `${process.env.CORS_ORIGIN || 'https://cypherofhealing.com'}/academy/${slug}`,
+      firstLessonTitle: firstLesson?.title || 'Station 1: The Cipher Framework',
+    });
+
+    await sendEmail(c.env.RESEND_API_KEY, {
+      to: user.email,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
+    });
+
+    return c.json({ enrollment, checkoutUrl: 'TODO_STRIPE_CHECKOUT_URL' }, 201);
+  } catch (error) {
+    return c.json({ error: 'Failed to enroll in course' }, 500);
+  }
 });
 
 // ─── Auth: Mark lesson complete ───
