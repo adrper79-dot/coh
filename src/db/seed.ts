@@ -98,6 +98,13 @@ export const seedData = {
       type: 'physical' as const,
       categoryName: 'Books',
       printFulfillmentId: null,
+      images: [
+        {
+          url: '/images/products/cipher-workbook.jpg',
+          alt: 'The Cipher of Healing: A Workbook - Guided companion for trauma recovery',
+          isPrimary: true,
+        },
+      ],
     },
     {
       title: 'The Legacy Letter: Guided Journal',
@@ -108,6 +115,13 @@ export const seedData = {
       type: 'physical' as const,
       categoryName: 'Journals',
       printFulfillmentId: null,
+      images: [
+        {
+          url: '/images/products/legacy-journal.jpg',
+          alt: 'The Legacy Letter: Guided Journal - Leather-bound reflection journal',
+          isPrimary: true,
+        },
+      ],
     },
     {
       title: 'The Trigger Tracker: Mobile App',
@@ -118,6 +132,13 @@ export const seedData = {
       type: 'digital' as const,
       categoryName: 'Digital Courses',
       printFulfillmentId: null,
+      images: [
+        {
+          url: '/images/products/trigger-tracker.jpg',
+          alt: 'The Trigger Tracker: Mobile App - Real-time healing progress tracker',
+          isPrimary: true,
+        },
+      ],
     },
     {
       title: '90-Day Resilience Challenge Bundle',
@@ -128,6 +149,13 @@ export const seedData = {
       type: 'physical' as const,
       categoryName: 'Digital Courses',
       printFulfillmentId: null,
+      images: [
+        {
+          url: '/images/products/resilience-bundle.jpg',
+          alt: '90-Day Resilience Challenge Bundle - Complete healing package',
+          isPrimary: true,
+        },
+      ],
     },
   ],
 

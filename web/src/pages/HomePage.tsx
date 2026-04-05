@@ -25,7 +25,7 @@ function Threshold() {
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1600&auto=format&fit=crop&q=60)',
+          backgroundImage: 'url(/images/hero/hero-main.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center 30%',
           backgroundAttachment: 'fixed',
@@ -305,22 +305,22 @@ function TheCraft() {
     {
       label: 'The Consultation',
       sub: 'Before the blade — the conversation',
-      photo: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&auto=format&fit=crop&q=80',
+      photo: '/images/craft/consultation.jpg',
     },
     {
       label: 'The Fade',
       sub: 'Precision is care made visible',
-      photo: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=600&auto=format&fit=crop&q=80',
+      photo: '/images/craft/fade.jpg',
     },
     {
       label: 'The Line-Up',
       sub: 'Edges sharp enough to declare intention',
-      photo: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=600&auto=format&fit=crop&q=80',
+      photo: '/images/craft/lineup.jpg',
     },
     {
       label: 'The Restoration',
       sub: 'Oil, blade, and steady hands',
-      photo: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=600&auto=format&fit=crop&q=80',
+      photo: '/images/craft/restoration.jpg',
     },
   ];
 
