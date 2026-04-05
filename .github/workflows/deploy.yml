@@ -38,6 +38,9 @@ jobs:
 
       - name: Build frontend
         working-directory: ./web
+        env:
+          VITE_API_URL: https://cypher-of-healing-api.workers.dev/api
+          VITE_STRIPE_PUBLIC_KEY: ${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
         run: npm run build
 
       - name: Deploy frontend to Cloudflare Pages
