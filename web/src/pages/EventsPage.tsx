@@ -13,6 +13,7 @@ const fade = (delay = 0) => ({
 
 interface Event {
   id: string;
+  slug: string;
   title: string;
   type?: string;
   typeLabel?: string;
@@ -104,9 +105,14 @@ export default function EventsPage() {
       setRegisteringId(event.id);
       setRegisterError(null);
 
-      await eventsApi.registerEvent(event.id, {
+      const result = await eventsApi.registerEvent(event.slug, {
         smsOptIn: false, // Could be a toggle
-      });
+      }) as { checkoutUrl?: string };
+
+      if (result?.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+        return;
+      }
 
       // Show success message or redirect
       alert('You have registered for ' + event.title);
@@ -163,8 +169,37 @@ export default function EventsPage() {
             style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE' }}
           >
             A cipher, in the tradition of hip-hop, is a circle of artists freestyling together —
-            each one elevating the next. These gatherings are that circle. Step in.
+            each one elevating the next. These gatherings are that circle: educational,
+            communal, and restorative. They are not group therapy.
           </motion.p>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16">
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            {
+              title: 'Webinars',
+              body: 'Best for learning the framework, language, and worldview in a lower-friction live format.',
+            },
+            {
+              title: 'Workshops',
+              body: 'Best for guided reflection, exercises, and more deliberate practice with the material.',
+            },
+            {
+              title: 'Retreats and Circles',
+              body: 'Best for people ready for deeper accountability, extended immersion, and communal restoration.',
+            },
+          ].map((item) => (
+            <motion.div key={item.title} {...fade()} className="p-5" style={{ backgroundColor: '#E8DCBE', border: '1px solid #8B5E3C' }}>
+              <h2 className="mb-3" style={{ fontFamily: '"Playfair Display", serif', color: '#2C1810', fontSize: '1.3rem' }}>
+                {item.title}
+              </h2>
+              <p style={{ fontFamily: '"Libre Baskerville", serif', color: '#3D2B1F', lineHeight: 1.8, fontSize: '14px' }}>
+                {item.body}
+              </p>
+            </motion.div>
+          ))}
         </div>
       </section>
 

@@ -5,6 +5,7 @@ import { useCartStore } from '@/stores/cart';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const NAV = [
+  { label: 'The Doctrine', path: '/about' },
   { label: 'The Chair',   path: '/booking' },
   { label: 'The Vault',   path: '/store'   },
   { label: 'The Academy', path: '/academy' },

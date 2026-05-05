@@ -1,14 +1,21 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, inArray, lt, gt, sql } from 'drizzle-orm';
+import Stripe from 'stripe';
 import { createDb } from '../db';
 import { services, appointments, availabilitySlots, activityLog, users } from '../db/schema';
 import { authMiddleware, optionalAuth } from '../middleware/auth';
-import { sendEmail, bookingConfirmationEmail, appointmentReminderEmail } from '../utils/email';
+import { createRateLimitMiddleware } from '../middleware/rate-limit';
+import { appointmentReminderEmail } from '../utils/email';
 import type { Env, Variables } from '../types/env';
 
 const booking = new Hono<{ Bindings: Env; Variables: Variables }>();
+const bookingWriteRateLimit = createRateLimitMiddleware({
+  namespace: 'booking-write',
+  maxRequests: 20,
+  windowSeconds: 60,
+});
 
 // ─── Public: List services ───
 booking.get('/services', async (c) => {
@@ -76,7 +83,7 @@ booking.get('/availability', zValidator('query', z.object({
 });
 
 // ─── Auth: Book appointment ───
-booking.post('/appointments', authMiddleware, zValidator('json', z.object({
+booking.post('/appointments', bookingWriteRateLimit, authMiddleware, zValidator('json', z.object({
   serviceId: z.string().uuid(),
   scheduledAt: z.string().datetime(),
   notes: z.string().optional(),
@@ -84,6 +91,8 @@ booking.post('/appointments', authMiddleware, zValidator('json', z.object({
   const userId = c.get('userId')!;
   const { serviceId, scheduledAt, notes } = c.req.valid('json');
   const db = createDb(c.env.HYPERDRIVE);
+  const stripe = new Stripe(c.env.STRIPE_SECRET_KEY);
+  let appointmentId: string | null = null;
 
   try {
     const service = await db.select().from(services).where(eq(services.id, serviceId)).limit(1);
@@ -95,48 +104,116 @@ booking.post('/appointments', authMiddleware, zValidator('json', z.object({
     const startTime = new Date(scheduledAt);
     const endTime = new Date(startTime.getTime() + Number(service[0].durationMinutes) * 60000);
 
-    const [appointment] = await db.insert(appointments).values({
-      userId,
-      serviceId,
-      scheduledAt: startTime,
-      endAt: endTime,
-      notes,
-      status: 'pending',
-    }).returning();
+    const currentUser = user[0];
+    const [appointment] = await db.transaction(async (tx) => {
+      // Advisory lock ensures only one booking attempt can reserve this slot at a time.
+      await tx.execute(sql`
+        SELECT pg_advisory_xact_lock(hashtext(${`booking:${startTime.toISOString()}`}))
+      `);
 
-    // Log activity (feeds CRM and cross-sell engine)
-    await db.insert(activityLog).values({
-      userId,
-      action: 'appointment.booked',
-      resourceType: 'appointment',
-      resourceId: appointment.id,
-      metadata: { serviceName: service[0].name, scheduledAt },
+      const [conflict] = await tx.select({ id: appointments.id })
+        .from(appointments)
+        .where(and(
+          inArray(appointments.status, ['pending', 'confirmed', 'in_progress']),
+          lt(appointments.scheduledAt, endTime),
+          gt(appointments.endAt, startTime),
+        ))
+        .limit(1);
+
+      if (conflict) {
+        throw new Error('SLOT_ALREADY_BOOKED');
+      }
+
+      const [createdAppointment] = await tx.insert(appointments).values({
+        userId,
+        serviceId,
+        scheduledAt: startTime,
+        endAt: endTime,
+        notes,
+        status: 'pending',
+      }).returning();
+
+      await tx.insert(activityLog).values({
+        userId,
+        action: 'appointment.booked',
+        resourceType: 'appointment',
+        resourceId: createdAppointment.id,
+        metadata: { serviceName: service[0].name, scheduledAt },
+      });
+
+      return [createdAppointment];
     });
 
-    // Send confirmation email
-    const dateStr = startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    const timeStr = startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    const emailTemplate = bookingConfirmationEmail({
-      userName: user[0].name,
-      serviceName: service[0].name,
-      appointmentDate: dateStr,
-      appointmentTime: timeStr,
-      depositAmount: service[0].depositAmount?.toString() || '0',
-      cancelUrl: `${process.env.CORS_ORIGIN}/bookings/${appointment.id}/cancel`,
+    appointmentId = appointment.id;
+
+    const appOrigin = c.env.CORS_ORIGIN || 'https://cypherofhealing.com';
+    const chargeAmount = Number(service[0].depositAmount ?? service[0].price);
+    if (!Number.isFinite(chargeAmount) || chargeAmount <= 0) {
+      return c.json({ error: 'Service price is not configured' }, 422);
+    }
+
+    let stripeCustomerId = currentUser.stripeCustomerId;
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: currentUser.email,
+        name: currentUser.name,
+        phone: currentUser.phone ?? undefined,
+        metadata: {
+          userId: currentUser.id,
+          app: 'coh',
+        },
+      });
+
+      stripeCustomerId = customer.id;
+      await db.update(users)
+        .set({ stripeCustomerId, updatedAt: new Date() })
+        .where(eq(users.id, currentUser.id));
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer: stripeCustomerId,
+      client_reference_id: appointment.id,
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            unit_amount: Math.round(chargeAmount * 100),
+            product_data: {
+              name: service[0].depositAmount ? `${service[0].name} Deposit` : service[0].name,
+              description: service[0].description ?? undefined,
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${appOrigin}/booking?checkout=success&appointment=${appointment.id}`,
+      cancel_url: `${appOrigin}/booking?checkout=cancelled&appointment=${appointment.id}`,
+      metadata: {
+        appointmentId: appointment.id,
+        serviceId: service[0].id,
+        serviceName: service[0].name,
+        userId,
+      },
+      phone_number_collection: {
+        enabled: true,
+      },
     });
 
-    await sendEmail(c.env.RESEND_API_KEY, {
-      to: user[0].email,
-      subject: emailTemplate.subject,
-      html: emailTemplate.html,
-      text: emailTemplate.text,
-    });
-
-    // TODO: Create Stripe PaymentIntent for deposit
     // TODO: Schedule SMS reminder
 
-    return c.json({ appointment }, 201);
+    return c.json({ appointment, checkoutUrl: checkoutSession.url }, 201);
   } catch (error) {
+    if (error instanceof Error && error.message === 'SLOT_ALREADY_BOOKED') {
+      return c.json({ error: 'Selected time is no longer available' }, 409);
+    }
+
+    if (appointmentId) {
+      await db.update(appointments)
+        .set({ status: 'cancelled', updatedAt: new Date() })
+        .where(eq(appointments.id, appointmentId));
+    }
+
     return c.json({ error: 'Failed to create appointment' }, 500);
   }
 });

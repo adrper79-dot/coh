@@ -4,11 +4,17 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { createDb } from '../db';
 import { users } from '../db/schema';
-import { createToken, verifyToken, hashPassword, verifyPassword, extractToken } from '../utils/auth';
+import { createToken, verifyToken, hashPassword, verifyPassword } from '../utils/auth';
 import { authMiddleware } from '../middleware/auth';
+import { createRateLimitMiddleware } from '../middleware/rate-limit';
 import type { Env, Variables } from '../types/env';
 
 const auth = new Hono<{ Bindings: Env; Variables: Variables }>();
+const authWriteRateLimit = createRateLimitMiddleware({
+  namespace: 'auth-write',
+  maxRequests: 12,
+  windowSeconds: 60,
+});
 
 // ─── Validation Schemas ───
 const signupSchema = z.object({
@@ -23,11 +29,11 @@ const loginSchema = z.object({
 });
 
 const refreshSchema = z.object({
-  token: z.string().min(1, 'Token is required'),
+  token: z.string().min(1, 'Token is required').optional(),
 });
 
 // ─── POST: Sign Up ───
-auth.post('/signup', zValidator('json', signupSchema), async (c) => {
+auth.post('/signup', authWriteRateLimit, zValidator('json', signupSchema), async (c) => {
   const { email, password, name } = c.req.valid('json');
   const db = createDb(c.env.HYPERDRIVE);
 
@@ -81,7 +87,7 @@ auth.post('/signup', zValidator('json', signupSchema), async (c) => {
 });
 
 // ─── POST: Login ───
-auth.post('/login', zValidator('json', loginSchema), async (c) => {
+auth.post('/login', authWriteRateLimit, zValidator('json', loginSchema), async (c) => {
   const { email, password } = c.req.valid('json');
   const db = createDb(c.env.HYPERDRIVE);
 
@@ -96,6 +102,14 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
     const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
       return c.json({ error: 'Invalid email or password' }, 401);
+    }
+
+    // Upgrade legacy password hashes on successful login.
+    if (!user.passwordHash.startsWith('pbkdf2$')) {
+      const passwordHash = await hashPassword(password);
+      await db.update(users)
+        .set({ passwordHash, updatedAt: new Date() })
+        .where(eq(users.id, user.id));
     }
 
     // Update last active
@@ -130,8 +144,14 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
 });
 
 // ─── POST: Refresh Token ───
-auth.post('/refresh-token', zValidator('json', refreshSchema), async (c) => {
-  const { token: oldToken } = c.req.valid('json');
+auth.post('/refresh-token', authWriteRateLimit, zValidator('json', refreshSchema), async (c) => {
+  const { token } = c.req.valid('json');
+  const authorizationToken = c.req.header('Authorization')?.replace(/^Bearer\s+/i, '');
+  const oldToken = token ?? authorizationToken;
+
+  if (!oldToken) {
+    return c.json({ error: 'Token is required' }, 400);
+  }
 
   try {
     // Verify old token (will throw if expired)

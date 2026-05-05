@@ -110,17 +110,23 @@ export default function BookingPage() {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      // Combine date and time into ISO datetime
-      const [hours, minutes] = selectedTime.match(/\d+/g)!.map(Number);
-      const isAM = selectedTime.includes('AM');
-      const hour24 = isAM && hours === 12 ? 0 : !isAM && hours !== 12 ? hours + 12 : hours;
-      
-      const scheduledAt = new Date(`${selectedDate}T${String(hour24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00Z`);
+      // Availability API returns 24-hour HH:mm slot strings.
+      const scheduledAt = new Date(`${selectedDate}T${selectedTime}:00Z`);
 
-      await bookingApi.createAppointment({
+      if (Number.isNaN(scheduledAt.getTime())) {
+        setSubmitError('Selected time is invalid. Please choose another slot.');
+        return;
+      }
+
+      const result = await bookingApi.createAppointment({
         serviceId: selectedService,
         scheduledAt: scheduledAt.toISOString(),
       });
+
+      if (result?.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+        return;
+      }
 
       // Navigate to confirmation page or dashboard
       navigate('/'); // Or redirect to appointments page once created
@@ -173,8 +179,16 @@ export default function BookingPage() {
             className="text-lg max-w-2xl leading-relaxed"
             style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE' }}
           >
-            Before the blade touches skin, there is always a consultation. Sit down. The barber's
-            first act is to ask what you are carrying and what you are ready to release.
+            Before the blade touches skin, there is always a consultation. This session centers
+            ritual, reflective care, and conversation in the chair. It is restorative, not
+            clinical therapy.
+          </motion.p>
+          <motion.p
+            {...fade(0.28)}
+            className="text-sm max-w-2xl mt-5"
+            style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1.7 }}
+          >
+            Best for people seeking presence, structure, and barber-led reflection.
           </motion.p>
         </div>
       </section>

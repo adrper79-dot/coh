@@ -5,13 +5,17 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'user' | 'admin';
+  role: 'client' | 'admin' | 'practitioner';
   phone?: string;
   avatar?: string;
 }
 
 interface AuthResponse {
   token: string;
+  user: User;
+}
+
+interface ProfileResponse {
   user: User;
 }
 
@@ -85,7 +89,8 @@ export const useAuthStore = create<AuthStore>((set) => {
     refreshProfile: async () => {
       set({ isLoading: true, error: null });
       try {
-        const user = await authApi.getProfile() as unknown as User;
+        const response = await authApi.getProfile() as unknown as ProfileResponse;
+        const user = response.user;
         localStorage.setItem('user', JSON.stringify(user));
         set({ user, isLoading: false });
       } catch (error: any) {
@@ -98,7 +103,8 @@ export const useAuthStore = create<AuthStore>((set) => {
     updateProfile: async (data: { name?: string; phone?: string; avatar?: string }) => {
       set({ isLoading: true, error: null });
       try {
-        const user = await authApi.updateProfile(data) as unknown as User;
+        const response = await authApi.updateProfile(data) as unknown as ProfileResponse;
+        const user = response.user;
         localStorage.setItem('user', JSON.stringify(user));
         set({ user, isLoading: false });
       } catch (error: any) {

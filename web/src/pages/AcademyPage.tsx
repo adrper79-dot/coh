@@ -13,6 +13,7 @@ const fade = (delay = 0) => ({
 
 interface Course {
   id: string;
+  slug: string;
   title: string;
   description: string;
   price: number;
@@ -61,14 +62,19 @@ export default function AcademyPage() {
     loadCourses();
   }, []);
 
-  const handleEnroll = async (courseId: string) => {
+  const handleEnroll = async (courseSlug: string) => {
     if (!user) {
       navigate('/login', { state: { redirect: '/academy' } });
       return;
     }
 
     try {
-      await academyApi.enrollCourse(courseId);
+      const result = await academyApi.enrollCourse(courseSlug) as { checkoutUrl?: string };
+      if (result?.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+        return;
+      }
+
       navigate('/academy/enrolled');
     } catch (err: any) {
       const msg = err?.message || 'Failed to enroll in course';
@@ -79,9 +85,50 @@ export default function AcademyPage() {
   return (
     <div>
 
+      <section style={{ backgroundColor: '#2C1810' }} className="py-18 md:py-24">
+        <div className="max-w-4xl mx-auto px-6 sm:px-10">
+          <motion.p
+            {...fade()}
+            className="uppercase tracking-[0.2em] mb-4"
+            style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '11px', color: '#C9A84C' }}
+          >
+            The Academy
+          </motion.p>
+          <motion.h1
+            {...fade(0.08)}
+            style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#F5ECD7', fontSize: 'clamp(2rem, 5vw, 4rem)', lineHeight: 1.15 }}
+            className="mb-5"
+          >
+            A structured path for decoding the patterns beneath your life.
+          </motion.h1>
+          <motion.p
+            {...fade(0.16)}
+            style={{ fontFamily: '"Libre Baskerville", Georgia, serif', color: '#E8DCBE', lineHeight: 1.85 }}
+            className="max-w-3xl"
+          >
+            The Academy translates the barbershop ethos into a repeatable educational framework.
+            It is designed for reflection, practice, and personal restoration. It is not therapy
+            or emergency mental health care.
+          </motion.p>
+        </div>
+      </section>
+
       {/* Courses — Ivory */}
       <section style={{ backgroundColor: '#F5ECD7' }} className="py-24 md:py-32">
         <div className="max-w-4xl mx-auto px-6 sm:px-10">
+          <motion.div {...fade()} className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-10">
+            {PILLARS.map((pillar) => (
+              <div key={pillar.name} className="p-4" style={{ backgroundColor: '#E8DCBE', border: '1px solid rgba(139,94,60,0.65)' }}>
+                <p style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#2C1810', fontSize: '1.1rem' }} className="mb-2">
+                  {pillar.name}
+                </p>
+                <p style={{ fontFamily: '"Libre Baskerville", Georgia, serif', color: '#704214', fontSize: '14px', lineHeight: 1.75 }}>
+                  {pillar.desc}
+                </p>
+              </div>
+            ))}
+          </motion.div>
+
           <motion.div {...fade()} className="mb-4">
             <p
               className="uppercase tracking-[0.2em] mb-4"
@@ -101,8 +148,8 @@ export default function AcademyPage() {
                 lineHeight: 1.8,
               }}
             >
-              Select a course to begin your healing journey. Each represents a complete pathway
-              through the material.
+              Select a course to begin a structured restoration journey. Each course represents a
+              complete educational pathway through the material.
             </p>
           </motion.div>
 
@@ -275,7 +322,7 @@ export default function AcademyPage() {
                                 style={{ borderTop: '1px solid rgba(201,168,76,0.2)' }}
                               >
                                 <button
-                                  onClick={() => handleEnroll(course.id)}
+                                  onClick={() => handleEnroll(course.slug)}
                                   className="flex-1 px-4 py-3 text-sm font-semibold transition-colors"
                                   style={{
                                     fontFamily: '"DM Sans", sans-serif',
@@ -293,7 +340,7 @@ export default function AcademyPage() {
                                   Enroll Now
                                 </button>
                                 <Link
-                                  to={`/academy/courses/${course.id}`}
+                                  to={`/academy/courses/${course.slug}`}
                                   className="flex-1 px-4 py-3 text-sm font-semibold transition-colors text-center"
                                   style={{
                                     fontFamily: '"DM Sans", sans-serif',

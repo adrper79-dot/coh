@@ -2,9 +2,10 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq, desc, and } from 'drizzle-orm';
+import Stripe from 'stripe';
 import { createDb } from '../db';
 import { products, productCategories, orders, orderItems, activityLog, users } from '../db/schema';
-import { authMiddleware, optionalAuth } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth';
 import { sendEmail, orderConfirmationEmail } from '../utils/email';
 import type { Env, Variables } from '../types/env';
 
@@ -57,11 +58,13 @@ store.post('/orders', authMiddleware, zValidator('json', z.object({
   const userId = c.get('userId')!;
   const { items, shippingAddress, couponCode, sourceAppointmentId } = c.req.valid('json');
   const db = createDb(c.env.HYPERDRIVE);
+  const stripe = new Stripe(c.env.STRIPE_SECRET_KEY);
 
   try {
     // Fetch user
     const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user.length) return c.json({ error: 'User not found' }, 404);
+    const currentUser = user[0];
 
     // Fetch products and calculate totals
     const productIds = items.map(i => i.productId);
@@ -87,6 +90,24 @@ store.post('/orders', authMiddleware, zValidator('json', z.object({
     // TODO: Calculate tax via Stripe Tax
     // TODO: Calculate shipping
 
+    let stripeCustomerId = currentUser.stripeCustomerId;
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: currentUser.email,
+        name: currentUser.name,
+        phone: currentUser.phone ?? undefined,
+        metadata: {
+          userId: currentUser.id,
+          app: 'coh',
+        },
+      });
+
+      stripeCustomerId = customer.id;
+      await db.update(users)
+        .set({ stripeCustomerId, updatedAt: new Date() })
+        .where(eq(users.id, currentUser.id));
+    }
+
     const [order] = await db.insert(orders).values({
       userId,
       orderNumber,
@@ -97,6 +118,64 @@ store.post('/orders', authMiddleware, zValidator('json', z.object({
       sourceAppointmentId,
       status: 'pending',
     }).returning();
+
+    const hasPhysicalItems = items.some((item) => productMap.get(item.productId)?.type === 'physical');
+    const stripeLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = lineItems.map((item) => {
+      const product = productMap.get(item.productId)!;
+      const unitAmount = Math.round(Number(item.unitPrice) * 100);
+
+      if (product.stripePriceId) {
+        return {
+          price: product.stripePriceId,
+          quantity: item.quantity,
+        };
+      }
+
+      return {
+        price_data: {
+          currency: 'usd',
+          unit_amount: unitAmount,
+          product_data: {
+            name: product.name,
+            description: product.shortDescription ?? product.description ?? undefined,
+            images: Array.isArray(product.images)
+              ? product.images
+                  .map((image) => String((image as Record<string, unknown>).url ?? ''))
+                  .filter(Boolean)
+              : undefined,
+          },
+        },
+        quantity: item.quantity,
+      };
+    });
+
+    const appOrigin = c.env.CORS_ORIGIN || 'https://cypherofhealing.com';
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer: stripeCustomerId,
+      client_reference_id: order.id,
+      line_items: stripeLineItems,
+      success_url: `${appOrigin}/store?checkout=success&order=${order.id}`,
+      cancel_url: `${appOrigin}/store?checkout=cancelled&order=${order.id}`,
+      metadata: {
+        orderId: order.id,
+        orderNumber,
+        userId,
+        sourceAppointmentId: sourceAppointmentId ?? '',
+      },
+      phone_number_collection: {
+        enabled: true,
+      },
+      shipping_address_collection: hasPhysicalItems
+        ? {
+            allowed_countries: ['US', 'CA'],
+          }
+        : undefined,
+    });
+
+    await db.update(orders)
+      .set({ stripeCheckoutSessionId: checkoutSession.id, updatedAt: new Date() })
+      .where(eq(orders.id, order.id));
 
     // Insert line items
     const itemsToInsert = [];
@@ -121,23 +200,21 @@ store.post('/orders', authMiddleware, zValidator('json', z.object({
 
     // Send order confirmation email
     const emailTemplate = orderConfirmationEmail({
-      userName: user[0].name,
+      userName: currentUser.name,
       orderNumber,
       items: itemsToInsert,
       total: Number(subtotal).toFixed(2),
-      checkoutUrl: `${process.env.CORS_ORIGIN}/checkout/${order.id}`,
+      checkoutUrl: checkoutSession.url ?? `${appOrigin}/store?checkout=resume&order=${order.id}`,
     });
 
     await sendEmail(c.env.RESEND_API_KEY, {
-      to: user[0].email,
+      to: currentUser.email,
       subject: emailTemplate.subject,
       html: emailTemplate.html,
       text: emailTemplate.text,
     });
 
-    // TODO: Create Stripe Checkout Session
-
-    return c.json({ order, checkoutUrl: 'TODO_STRIPE_CHECKOUT_URL' }, 201);
+    return c.json({ order, checkoutUrl: checkoutSession.url }, 201);
   } catch (error) {
     return c.json({ error: 'Failed to create order' }, 500);
   }

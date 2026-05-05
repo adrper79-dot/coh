@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { homeTestimonials, pathwayRecommendations } from '@/content/siteContent';
 
 // ——— Reusable pieces ———
 
@@ -78,32 +80,32 @@ function Threshold() {
             letterSpacing: '-0.01em',
           }}
         >
-          The outer is a reflection<br />
-          <em style={{ color: '#C9A84C' }}>of the inner.</em>
+          The chair. The course.<br />
+          <em style={{ color: '#C9A84C' }}>The circle.</em>
         </motion.h1>
 
         <motion.p
           {...fade(0.22)}
           style={{
             fontFamily: '"Libre Baskerville", Georgia, serif',
-            fontStyle: 'italic',
             color: '#E8DCBE',
             fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
             lineHeight: 1.75,
-            maxWidth: '560px',
+            maxWidth: '760px',
             margin: '1.75rem auto 0',
           }}
         >
-          Step into the space where craft meets restoration, and leave carrying
-          something you didn't know you were missing.
+          CypherOfHealing is a barber-led restoration brand built around reflective care,
+          healing education, and community. Start with the chair, enter the Academy, or step
+          into the circle. This platform is restorative and educational, not therapy.
         </motion.p>
 
         <motion.div {...fade(0.34)} className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/booking" className="btn btn-primary" style={{ fontSize: '13px' }}>
-            Begin Your Session
+            Start with the Chair
           </Link>
           <Link
-            to="/academy"
+            to="/about"
             className="btn"
             style={{
               background: 'transparent',
@@ -112,9 +114,23 @@ function Threshold() {
               fontSize: '13px',
             }}
           >
-            Enter the Academy
+            Read the Doctrine
           </Link>
         </motion.div>
+
+        <motion.p
+          {...fade(0.42)}
+          className="mt-6"
+          style={{
+            fontFamily: '"DM Sans", sans-serif',
+            color: '#C9A84C',
+            fontSize: '11px',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+          }}
+        >
+          Reflective wellness experiences. Healing education. Not crisis care.
+        </motion.p>
 
         {/* Scroll cue */}
         <motion.div
@@ -138,6 +154,139 @@ function Threshold() {
           >
             ↓
           </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function Orientation() {
+  const cards = [
+    {
+      title: 'What this is',
+      body: 'A barber-led restoration platform for reflective care, healing education, and community-based growth.',
+    },
+    {
+      title: 'Who it helps',
+      body: 'People carrying inherited patterns, unresolved wounds, or a desire for deeper dignity, structure, and self-understanding.',
+    },
+    {
+      title: 'What it is not',
+      body: 'CypherOfHealing does not present itself as therapy, diagnosis, or crisis support through this platform.',
+    },
+  ];
+
+  return (
+    <section style={{ backgroundColor: '#F5ECD7' }} className="py-16 md:py-20">
+      <div className="max-w-6xl mx-auto px-6 sm:px-10">
+        <motion.div {...fade()} className="max-w-3xl mb-10">
+          <p className="uppercase tracking-[0.2em] mb-4" style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '11px', color: '#C9A84C' }}>
+            Orientation
+          </p>
+          <h2 style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#2C1810', fontSize: 'clamp(1.8rem, 4vw, 3rem)', lineHeight: 1.2 }}>
+            Understand the work before you enter it.
+          </h2>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {cards.map((card, index) => (
+            <motion.div key={card.title} {...fade(index * 0.06)} className="p-6" style={{ backgroundColor: '#E8DCBE', border: '1px solid #8B5E3C' }}>
+              <h3 className="mb-3" style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#2C1810', fontSize: '1.3rem' }}>
+                {card.title}
+              </h3>
+              <p style={{ fontFamily: '"Libre Baskerville", Georgia, serif', color: '#3D2B1F', fontSize: '15px', lineHeight: 1.8 }}>
+                {card.body}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PathwaySelector() {
+  const options = [
+    {
+      key: 'chair',
+      prompt: 'I need a trusted human place to begin.',
+    },
+    {
+      key: 'academy',
+      prompt: 'I need structure and language for what I am carrying.',
+    },
+    {
+      key: 'vault',
+      prompt: 'I want books, prompts, and daily tools first.',
+    },
+    {
+      key: 'show',
+      prompt: 'I want to feel the worldview before I commit.',
+    },
+    {
+      key: 'circle',
+      prompt: 'I want live learning and community accountability.',
+    },
+  ] as const;
+
+  const [selected, setSelected] = useState<(typeof options)[number]['key']>(options[0].key);
+
+  return (
+    <section style={{ backgroundColor: '#E8DCBE' }} className="py-20 md:py-24">
+      <div className="max-w-6xl mx-auto px-6 sm:px-10 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8 items-start">
+        <motion.div {...fade()}>
+          <p className="uppercase tracking-[0.2em] mb-4" style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '11px', color: '#C9A84C' }}>
+            Guided Intake
+          </p>
+          <h2 style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#2C1810', fontSize: 'clamp(1.8rem, 4vw, 3rem)', lineHeight: 1.2 }}>
+            If you are not sure where to begin, start here.
+          </h2>
+          <p className="mt-5" style={{ fontFamily: '"Libre Baskerville", Georgia, serif', color: '#704214', fontSize: '16px', lineHeight: 1.85 }}>
+            Choose the statement that feels most true right now. The goal is not to diagnose you. It is to route you into the right doorway.
+          </p>
+
+          <div className="mt-8 grid grid-cols-1 gap-3">
+            {options.map((option, index) => {
+              const recommendation = pathwayRecommendations[option.key];
+              const isSelected = option.key === selected;
+
+              return (
+                <motion.div key={option.key} {...fade(index * 0.05)}>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(option.key)}
+                    className="block p-5 w-full text-left"
+                    style={{
+                      backgroundColor: isSelected ? '#2C1810' : '#F5ECD7',
+                      border: isSelected ? '2px solid #C9A84C' : '1px solid #8B5E3C',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <p style={{ fontFamily: '"Libre Baskerville", Georgia, serif', color: isSelected ? '#F5ECD7' : '#2C1810', lineHeight: 1.8 }}>
+                      {option.prompt}
+                    </p>
+                  </button>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        <motion.div {...fade(0.1)} className="p-6" style={{ backgroundColor: '#2C1810', borderLeft: '4px solid #C9A84C' }}>
+          <p className="uppercase tracking-widest text-xs mb-4" style={{ fontFamily: '"DM Sans", sans-serif', color: '#C9A84C', letterSpacing: '0.2em' }}>
+            Recommended Starting Point
+          </p>
+          <h3 className="mb-3" style={{ fontFamily: '"Playfair Display", serif', color: '#F5ECD7', fontSize: '1.8rem' }}>
+            {pathwayRecommendations[selected].title}
+          </h3>
+          <p style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE', lineHeight: 1.85 }}>
+            {pathwayRecommendations[selected].description}
+          </p>
+          <div className="mt-6">
+            <Link to={pathwayRecommendations[selected].path} className="btn btn-primary" style={{ fontSize: '13px' }}>
+              {pathwayRecommendations[selected].cta}
+            </Link>
+          </div>
         </motion.div>
       </div>
     </section>
@@ -213,7 +362,8 @@ function Lineage() {
             For centuries, the man with steady hands and a blade was the most accessible healer
             the common person would ever know. The barbershop carried that lineage through slavery,
             through Jim Crow, through the civil rights movement. CypherOfHealing honors that
-            tradition. We decode what needs healing. We restore what was always there.
+            tradition. We decode what needs healing, restore what dignity can hold, and translate
+            that lineage into a modern experience of care, education, and accountability.
           </p>
         </motion.div>
 
@@ -532,29 +682,127 @@ function TheKnowledge() {
   );
 }
 
-// ——— Movement 5: The Cipher (testimonials + CTA) ———
-function TheCipherClose() {
-  const testimonials = [
+function Pathways() {
+  const steps = [
     {
-      quote:
-        'I came in for a cut and left having talked about my father for the first time in years. That\'s not a barbershop. That\'s a sanctuary.',
-      name: 'Marcus T.',
-      via: 'The Chair',
+      step: '01',
+      title: 'Start with the Chair',
+      body: 'Enter through ritual, grooming, and reflective conversation if you want an in-person point of trust.',
+      to: '/booking',
     },
     {
-      quote:
-        'Station 3 broke something open in me. I finally understood why I react the way I do. The Trigger Tracker changed my relationships.',
-      name: 'DeShawn W.',
-      via: 'The Academy',
+      step: '02',
+      title: 'Enter the Academy',
+      body: 'Choose the structured path if you want language, tools, and a framework for decoding patterns.',
+      to: '/academy',
     },
     {
-      quote:
-        'The restoration oil sits on my bathroom shelf. Every morning I use it, I remember — I am worth this care even when no one is watching.',
-      name: 'Jordan M.',
-      via: 'The Vault',
+      step: '03',
+      title: 'Carry the Work Home',
+      body: 'Use oils, books, and journals as tangible reminders that restoration continues outside the session.',
+      to: '/store',
+    },
+    {
+      step: '04',
+      title: 'Watch the Show',
+      body: 'Use the barber-chair conversation format as a low-friction way to understand the voice, worldview, and emotional texture of the brand.',
+      to: '/show',
+    },
+    {
+      step: '05',
+      title: 'Step into the Circle',
+      body: 'Join workshops and gatherings when you want communal reflection, live teaching, and accountability.',
+      to: '/events',
     },
   ];
 
+  return (
+    <section style={{ backgroundColor: '#F5ECD7' }} className="py-24 md:py-32">
+      <div className="max-w-6xl mx-auto px-6 sm:px-10">
+        <motion.div {...fade()} className="max-w-3xl mb-12">
+          <p className="uppercase tracking-[0.2em] mb-4" style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '11px', color: '#C9A84C' }}>
+            How to Enter
+          </p>
+          <h2 style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#2C1810', fontSize: 'clamp(1.8rem, 4vw, 3rem)', lineHeight: 1.2 }}>
+            One identity. Clear entry points.
+          </h2>
+          <p className="mt-5" style={{ fontFamily: '"Libre Baskerville", Georgia, serif', color: '#704214', fontSize: '16px', lineHeight: 1.85 }}>
+            The experience should feel guided, not mysterious. Choose the pathway that matches your current need.
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {steps.map((item, index) => (
+            <motion.div key={item.title} {...fade(index * 0.06)}>
+              <Link to={item.to} className="block p-6 h-full" style={{ backgroundColor: '#E8DCBE', border: '1px solid #8B5E3C' }}>
+                <div className="mb-3" style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#C9A84C', fontSize: '12px' }}>
+                  {item.step}
+                </div>
+                <h3 className="mb-3" style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#2C1810', fontSize: '1.35rem' }}>
+                  {item.title}
+                </h3>
+                <p style={{ fontFamily: '"Libre Baskerville", Georgia, serif', color: '#3D2B1F', lineHeight: 1.8 }}>
+                  {item.body}
+                </p>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TheShowBridge() {
+  return (
+    <section style={{ backgroundColor: '#2C1810' }} className="py-24 md:py-32">
+      <div className="max-w-6xl mx-auto px-6 sm:px-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <motion.div {...fade()}>
+          <p className="uppercase tracking-[0.2em] mb-4" style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '11px', color: '#C9A84C' }}>
+            The Show
+          </p>
+          <h2 style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#F5ECD7', fontSize: 'clamp(1.8rem, 4vw, 3rem)', lineHeight: 1.2 }}>
+            The worldview, made visible.
+          </h2>
+          <p className="mt-5" style={{ fontFamily: '"Libre Baskerville", Georgia, serif', color: '#E8DCBE', fontSize: '16px', lineHeight: 1.85 }}>
+            The barber-chair conversation format is the public editorial front door to Cypher of
+            Healing. It lets visitors encounter the voice, ritual, and emotional honesty of the
+            brand before they ever choose a deeper pathway.
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row gap-4">
+            <Link to="/show" className="btn btn-primary" style={{ fontSize: '13px' }}>
+              Explore the Show
+            </Link>
+            <Link to="/events" className="btn btn-outline" style={{ fontSize: '13px', borderColor: '#C9A84C', color: '#C9A84C' }}>
+              Join a Live Cipher
+            </Link>
+          </div>
+        </motion.div>
+
+        <motion.div {...fade(0.12)} className="p-8" style={{ backgroundColor: '#3D2B1F', borderLeft: '4px solid #C9A84C' }}>
+          <p className="uppercase tracking-widest text-xs mb-4" style={{ fontFamily: '"DM Sans", sans-serif', color: '#C9A84C', letterSpacing: '0.2em' }}>
+            Format Logic
+          </p>
+          <div className="space-y-3">
+            {[
+              'A service begins with a real theme.',
+              'The conversation remains grounded in dignity, not spectacle.',
+              'Each episode offers a clear Cipher takeaway.',
+              'The viewer leaves with a next step into the wider ecosystem.',
+            ].map((item) => (
+              <p key={item} style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE', lineHeight: 1.8 }}>
+                {item}
+              </p>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ——— Movement 5: The Cipher (testimonials + CTA) ———
+function TheCipherClose() {
   return (
     <section style={{ backgroundColor: '#2C1810' }} className="py-24 md:py-32">
       <div className="max-w-6xl mx-auto px-6 sm:px-10">
@@ -569,7 +817,7 @@ function TheCipherClose() {
         </motion.p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
-          {testimonials.map((t, i) => (
+          {homeTestimonials.map((t, i) => (
             <motion.div key={t.name} {...fade(i * 0.1)}>
               <div
                 className="p-8 h-full"
@@ -687,9 +935,13 @@ export default function HomePage() {
   return (
     <div>
       <Threshold />
+      <Orientation />
+      <PathwaySelector />
       <Lineage />
       <TheCraft />
       <TheKnowledge />
+      <Pathways />
+      <TheShowBridge />
       <TheCipherClose />
     </div>
   );

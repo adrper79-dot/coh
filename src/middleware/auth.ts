@@ -1,5 +1,5 @@
 import { Context, Next } from 'hono';
-import { jwtVerify } from 'jose';
+import { verifyToken } from '../utils/auth';
 import type { Env, Variables } from '../types/env';
 
 export async function authMiddleware(c: Context<{ Bindings: Env; Variables: Variables }>, next: Next) {
@@ -10,10 +10,14 @@ export async function authMiddleware(c: Context<{ Bindings: Env; Variables: Vari
 
   const token = authHeader.slice(7);
   try {
-    const secret = new TextEncoder().encode(c.env.JWT_SECRET);
-    const { payload } = await jwtVerify(token, secret);
+    const payload = await verifyToken(token, c.env.JWT_SECRET);
+    const userId = payload.sub ?? payload.userId;
 
-    c.set('userId', payload.sub as string);
+    if (!userId) {
+      return c.json({ error: 'Invalid token payload' }, 401);
+    }
+
+    c.set('userId', userId);
     c.set('userRole', payload.role as string);
 
     await next();
@@ -27,9 +31,11 @@ export async function optionalAuth(c: Context<{ Bindings: Env; Variables: Variab
   if (authHeader?.startsWith('Bearer ')) {
     try {
       const token = authHeader.slice(7);
-      const secret = new TextEncoder().encode(c.env.JWT_SECRET);
-      const { payload } = await jwtVerify(token, secret);
-      c.set('userId', payload.sub as string);
+      const payload = await verifyToken(token, c.env.JWT_SECRET);
+      const userId = payload.sub ?? payload.userId;
+      if (userId) {
+        c.set('userId', userId);
+      }
       c.set('userRole', payload.role as string);
     } catch {
       // Invalid token — continue without auth

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../stores/auth';
+import { courseFallbackContent } from '@/content/siteContent';
 
 interface Lesson {
   id: string;
@@ -39,56 +40,13 @@ interface CourseDetail {
 
 const API = import.meta.env.VITE_API_URL ?? 'https://cypher-of-healing-api.workers.dev';
 
-const pricingTiers = [
-  {
-    name: 'The Cipher',
-    price: '$197',
-    description: 'Full course access, self-paced for life',
-    features: [
-      'All 6 stations of content',
-      'Downloadable workbooks & exercises',
-      'Lifetime access',
-      'Certificate of completion',
-    ],
-    cta: 'Enroll Now',
-    highlighted: false,
-  },
-  {
-    name: 'The Cipher + Coaching',
-    price: '$297',
-    description: 'Course + 1 private integration session',
-    features: [
-      'Everything in The Cipher',
-      '1 private coaching session (60 min)',
-      'Personalized integration plan',
-      'Priority email support',
-      'Access to community forums',
-    ],
-    cta: 'Enroll + Book Session',
-    highlighted: true,
-  },
-  {
-    name: 'The Full Immersion',
-    price: '$497',
-    description: 'Deep-dive with ongoing support',
-    features: [
-      'Everything in Cipher + Coaching',
-      '3 private coaching sessions',
-      'Weekly group accountability call',
-      'Custom resilience blueprint',
-      'Inner Circle community access',
-    ],
-    cta: 'Apply for Immersion',
-    highlighted: false,
-  },
-];
-
 export default function CoursePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { token } = useAuthStore();
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [courseFetchFailed, setCourseFetchFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
@@ -102,12 +60,13 @@ export default function CoursePage() {
       if (!res.ok) throw new Error();
       const data = await res.json();
       setCourse(data.course);
+      setCourseFetchFailed(false);
       // Expand first module by default
       if (data.course.modules?.length > 0) {
         setExpandedModule(data.course.modules[0].id);
       }
     } catch {
-      // Course not found or API error — show fallback content
+      setCourseFetchFailed(true);
     } finally {
       setLoading(false);
     }
@@ -117,16 +76,19 @@ export default function CoursePage() {
     fetchCourse();
   }, [fetchCourse]);
 
-  const handleEnroll = async (tier: typeof pricingTiers[0]) => {
+  const handleEnroll = async (tier: (typeof courseFallbackContent.pricingTiers)[number]) => {
     if (!token) {
       navigate('/login');
       return;
     }
-    if (tier.name === 'The Full Immersion') {
+    if (tier.action === 'apply') {
       navigate('/booking');
       return;
     }
-    if (!course) return;
+    if (!course) {
+      navigate('/academy');
+      return;
+    }
     setEnrolling(true);
     try {
       const res = await fetch(`${API}/api/academy/courses/${course.slug}/enroll`, {
@@ -174,14 +136,17 @@ export default function CoursePage() {
     );
   }
 
-  // Use fallback data if API unavailable (static course data)
-  const displayTitle = course?.title ?? 'The Cipher of Healing';
-  const displayDescription =
-    course?.description ??
-    'A 6-station guided journey that decodes the language of your wounds, inhabits the zero of the present, and restores the future you were always meant to live.';
+  // Use fallback content if API data is unavailable.
+  const displayTitle = course?.title ?? courseFallbackContent.title;
+  const displayDescription = course?.description ?? courseFallbackContent.description;
   const displayModules = course?.modules ?? [];
   const displayPrice = course?.price ? `$${course.price}` : '$197';
   const totalLessons = course?.totalLessons ?? displayModules.flatMap((m) => m.lessons).length;
+  const displayQuote = courseFallbackContent.quote;
+  const displayStats = courseFallbackContent.stats;
+  const displayStations = courseFallbackContent.stations;
+  const displayTestimonials = courseFallbackContent.testimonials;
+  const pricingTiers = courseFallbackContent.pricingTiers;
 
   return (
     <div style={{ backgroundColor: '#F5ECD7', minHeight: '100vh' }}>
@@ -211,6 +176,9 @@ export default function CoursePage() {
               </h1>
               <p className="text-lg leading-relaxed mb-8" style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE' }}>
                 {displayDescription}
+              </p>
+              <p className="text-sm uppercase tracking-widest mb-8" style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C', letterSpacing: '0.12em' }}>
+                Educational and restorative. Not therapy or crisis care.
               </p>
 
               {/* Meta stats */}
@@ -255,15 +223,10 @@ export default function CoursePage() {
               style={{ backgroundColor: '#1A0E09', border: '1px solid #704214' }}
             >
               <blockquote className="text-xl font-bold italic leading-relaxed mb-8" style={{ fontFamily: '"Playfair Display", serif', color: '#E8DCBE' }}>
-                "A cipher is code. A zero. A circle. This course gives you both the key and the courage to use it."
+                "{displayQuote}"
               </blockquote>
               <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Format', value: 'Video + Workbook' },
-                  { label: 'Access', value: 'Lifetime' },
-                  { label: 'Level', value: 'All levels' },
-                  { label: 'Certificate', value: 'Yes, upon completion' },
-                ].map((item) => (
+                {displayStats.map((item) => (
                   <div key={item.label} className="p-4" style={{ backgroundColor: '#2C1810', border: '1px solid #3D2B1F' }}>
                     <div className="text-xs uppercase tracking-wide mb-1" style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#704214' }}>{item.label}</div>
                     <div className="font-semibold text-sm" style={{ fontFamily: 'DM Sans, sans-serif', color: '#E8DCBE' }}>{item.value}</div>
@@ -291,20 +254,18 @@ export default function CoursePage() {
             <p className="text-lg max-w-2xl" style={{ fontFamily: '"Libre Baskerville", serif', color: '#3D2B1F' }}>
               Six stations of deliberate, sequenced restoration — because healing is not random, it is structured.
             </p>
+            {courseFetchFailed && (
+              <p className="text-sm mt-4" style={{ fontFamily: 'DM Sans, sans-serif', color: '#704214', letterSpacing: '0.03em' }}>
+                Live course data is unavailable right now, so this page is showing the canonical course narrative and offer structure.
+              </p>
+            )}
           </motion.div>
 
           <motion.div
             variants={containerVariants} initial="hidden" whileInView="show" viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
           >
-            {[
-              { num: '01', title: 'The Cipher Framework', desc: 'Set your intention. Learn what the cipher means — as code, as zero, as circle. Make the commitment to honesty.' },
-              { num: '02', title: 'Roots of the Past', desc: 'Map your wounds without re-living them. Childhood patterns, family roles, attachment styles — the code you inherited.' },
-              { num: '03', title: 'Breaking the Code', desc: 'Recognize trauma responses in daily life. Name the triggers. Close the gap between stimulus and choice.' },
-              { num: '04', title: 'Healing in Motion', desc: 'Mind-body reset. Cognitive reframing. Rewriting beliefs that were never yours to begin with.' },
-              { num: '05', title: 'Rebuilding Resilience', desc: 'Daily habits that compound. Boundaries as love. The 30-day tracker that keeps the fresh cut clean.' },
-              { num: '06', title: 'The Cipher of the Future', desc: 'Visualize the healed self. Write your Legacy Letter. Declare what you pass forward — and what ends with you.' },
-            ].map((s) => (
+            {displayStations.map((s) => (
               <motion.div
                 key={s.num} variants={itemVariants}
                 className="p-7 transition-colors"
@@ -436,7 +397,7 @@ export default function CoursePage() {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4" style={{ fontFamily: '"Playfair Display", serif', color: '#F5ECD7' }}>Enter the Cipher</h2>
             <p className="text-lg max-w-xl mx-auto" style={{ fontFamily: '"Libre Baskerville", serif', color: '#8B5E3C' }}>
-              Three tiers of access. One transformation. Choose the level of support that matches where you are.
+              Three tiers of access. One restoration path. Choose the level of structure and guided integration that matches where you are.
             </p>
           </motion.div>
 
@@ -486,7 +447,7 @@ export default function CoursePage() {
           </motion.div>
 
           <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center text-sm mt-10" style={{ fontFamily: '"Libre Baskerville", serif', color: '#704214' }}>
-            All tiers include lifetime access. Questions?{' '}
+            All tiers include lifetime access. Guided integration sessions are reflective and educational, not clinical treatment. Questions?{' '}
             <Link to="/booking" className="underline" style={{ color: '#C9A84C' }}>Book a free consultation</Link>.
           </motion.p>
         </div>

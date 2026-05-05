@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq, and, desc, gte } from 'drizzle-orm';
+import Stripe from 'stripe';
 import { createDb } from '../db';
 import { events, eventRegistrations, activityLog, users } from '../db/schema';
 import { authMiddleware, optionalAuth } from '../middleware/auth';
@@ -9,6 +10,20 @@ import { sendEmail, eventRegistrationEmail } from '../utils/email';
 import type { Env, Variables } from '../types/env';
 
 const eventsRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
+const STRIPE_METADATA_MAX_LENGTH = 500;
+
+function serializeIntakeResponsesForMetadata(intakeResponses: unknown) {
+  if (!intakeResponses) {
+    return '';
+  }
+
+  try {
+    const serialized = JSON.stringify(intakeResponses);
+    return serialized.length <= STRIPE_METADATA_MAX_LENGTH ? serialized : '';
+  } catch {
+    return '';
+  }
+}
 
 // ─── Public: List upcoming events ───
 eventsRouter.get('/', async (c) => {
@@ -56,7 +71,7 @@ eventsRouter.get('/:slug', optionalAuth, async (c) => {
 
 // ─── Auth: Register for event ───
 eventsRouter.post('/:slug/register', authMiddleware, zValidator('json', z.object({
-  intakeResponses: z.record(z.any()).optional(),  // for consultations with intake forms
+  intakeResponses: z.record(z.string(), z.unknown()).optional(),  // for consultations with intake forms
 }).optional()), async (c) => {
   const userId = c.get('userId')!;
   const slug = c.req.param('slug');
@@ -81,6 +96,66 @@ eventsRouter.post('/:slug/register', authMiddleware, zValidator('json', z.object
       .where(and(eq(eventRegistrations.eventId, event.id), eq(eventRegistrations.userId, userId)))
       .limit(1);
     if (existing) return c.json({ error: 'Already registered', registration: existing }, 409);
+
+    const appOrigin = c.env.CORS_ORIGIN || 'https://cypherofhealing.com';
+    const eventPrice = event.price ? Number(event.price) : 0;
+
+    if (eventPrice > 0) {
+      const stripe = new Stripe(c.env.STRIPE_SECRET_KEY);
+
+      let stripeCustomerId = user.stripeCustomerId;
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.name,
+          phone: user.phone ?? undefined,
+          metadata: {
+            userId: user.id,
+            app: 'coh',
+          },
+        });
+
+        stripeCustomerId = customer.id;
+        await db.update(users)
+          .set({ stripeCustomerId, updatedAt: new Date() })
+          .where(eq(users.id, user.id));
+      }
+
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        customer: stripeCustomerId,
+        client_reference_id: `${userId}:${event.id}`,
+        line_items: [
+          event.stripePriceId
+            ? {
+                price: event.stripePriceId,
+                quantity: 1,
+              }
+            : {
+                price_data: {
+                  currency: 'usd',
+                  unit_amount: Math.round(eventPrice * 100),
+                  product_data: {
+                    name: event.title,
+                    description: event.description ?? undefined,
+                  },
+                },
+                quantity: 1,
+              },
+        ],
+        success_url: `${appOrigin}/events?checkout=success&event=${event.slug}`,
+        cancel_url: `${appOrigin}/events?checkout=cancelled&event=${event.slug}`,
+        metadata: {
+          eventId: event.id,
+          eventSlug: event.slug,
+          userId,
+          eventType: event.type,
+          intakeResponses: serializeIntakeResponsesForMetadata(body?.intakeResponses),
+        },
+      });
+
+      return c.json({ checkoutUrl: checkoutSession.url }, 201);
+    }
 
     const [registration] = await db.insert(eventRegistrations).values({
       eventId: event.id,
@@ -109,13 +184,12 @@ eventsRouter.post('/:slug/register', authMiddleware, zValidator('json', z.object
     const eventTime = new Date(event.scheduledAt!).toLocaleTimeString('en-US', { 
       hour: 'numeric', minute: '2-digit' 
     });
-
     const emailTemplate = eventRegistrationEmail({
       userName: user.name,
       eventTitle: event.title,
       eventDate: eventDate,
       eventTime: eventTime,
-      eventUrl: `${process.env.CORS_ORIGIN || 'https://cypherofhealing.com'}/events/${slug}`,
+      eventUrl: `${appOrigin}/events/${slug}`,
       zoomLink: event.meetingUrl ?? undefined,
     });
 
@@ -126,7 +200,6 @@ eventsRouter.post('/:slug/register', authMiddleware, zValidator('json', z.object
       text: emailTemplate.text,
     });
 
-    // TODO: If paid event, create Stripe Checkout Session
     // TODO: Schedule reminder
 
     return c.json({ registration }, 201);

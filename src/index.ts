@@ -16,9 +16,9 @@ import adminCourse from './routes/admin-course';
 import adminSeed from './routes/admin-seed';
 import comms from './routes/communications';
 import adminAudio from './routes/admin-audio';
+import webhooks from './routes/webhooks';
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
-const isDev = process.env.ENVIRONMENT === 'development';
 
 // ─── Global middleware ───
 app.use('*', logger());
@@ -119,6 +119,7 @@ app.route('/api/booking', booking);
 app.route('/api/store', store);
 app.route('/api/academy', academy);
 app.route('/api/events', events);
+app.route('/api/webhooks', webhooks);
 app.route('/api/admin', adminCourse);
 app.route('/api/admin/seed', adminSeed);
 app.route('/api/comms', comms);
@@ -134,6 +135,6 @@ app.notFound((c) => {
 });
 
 // ─── Error handler ───
-app.onError(createErrorHandler(isDev));
+app.onError((err, c) => createErrorHandler(c.env.ENVIRONMENT === 'development')(err, c));
 
 export default app;

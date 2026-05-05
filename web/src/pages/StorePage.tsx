@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useCartStore } from '@/stores/cart';
 import { storeApi } from '@/lib/api';
 
@@ -122,6 +123,39 @@ export default function StorePage() {
             These are not retail products. They are extensions of the restoration. The outer is a
             reflection of the inner — and we choose to dress valuable because we are valuable.
           </motion.p>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16">
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            {
+              title: 'Ritual Tools',
+              body: 'Use grooming and restoration products to make care tactile, repeatable, and embodied.',
+            },
+            {
+              title: 'Reflective Tools',
+              body: 'Use books and journals when you need language, prompts, and structure outside the appointment.',
+            },
+            {
+              title: 'Carry the Work Home',
+              body: 'The Vault exists to extend the restoration beyond the chair, not to behave like generic merchandise.',
+            },
+          ].map((item) => (
+            <motion.div key={item.title} {...fade()} className="p-5" style={{ backgroundColor: '#E8DCBE', border: '1px solid #8B5E3C' }}>
+              <h2 className="mb-3" style={{ fontFamily: '"Playfair Display", serif', color: '#2C1810', fontSize: '1.3rem' }}>
+                {item.title}
+              </h2>
+              <p style={{ fontFamily: '"Libre Baskerville", serif', color: '#3D2B1F', lineHeight: 1.8, fontSize: '14px' }}>
+                {item.body}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+        <div className="max-w-5xl mx-auto px-6 mt-8">
+          <Link to="/books" className="btn btn-outline" style={{ fontSize: '13px' }}>
+            Explore the Books Pathway
+          </Link>
         </div>
       </section>
 

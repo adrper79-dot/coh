@@ -43,10 +43,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-16">
 
         {/* Top grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-12">
 
           {/* Brand column */}
-          <div className="md:col-span-4">
+          <div className="md:col-span-2 lg:col-span-4">
             {/* Cipher mark */}
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -82,7 +82,7 @@ export default function Footer() {
               }}
             >
               Before the barber was a barber, he was a healer. We honor that lineage — through the
-              chair, the vault, and the cipher.
+              chair, the academy, the vault, and the circle.
             </p>
 
             {/* Gold rule */}
@@ -99,12 +99,22 @@ export default function Footer() {
                 lineHeight: '1.7',
               }}
             >
-              "The cipher is open."
+              Reflective care and healing education. Not therapy or crisis support.
             </p>
           </div>
 
           {/* Nav columns */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-1 lg:col-span-2">
+            <H>The Doctrine</H>
+            <ul>
+              <FooterLink to="/about">About the Work</FooterLink>
+              <FooterLink to="/founder">Founder Story</FooterLink>
+              <FooterLink to="/about">What This Is</FooterLink>
+              <FooterLink to="/disclaimer">Participation Guide</FooterLink>
+            </ul>
+          </div>
+
+          <div className="md:col-span-1 lg:col-span-2">
             <H>The Chair</H>
             <ul>
               <FooterLink to="/booking">Book a Session</FooterLink>
@@ -113,16 +123,17 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-1 lg:col-span-2">
             <H>The Vault</H>
             <ul>
               <FooterLink to="/store">All Products</FooterLink>
+              <FooterLink to="/books">Books</FooterLink>
               <FooterLink to="/store">Oils &amp; Grooming</FooterLink>
               <FooterLink to="/store">Books &amp; Journals</FooterLink>
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-1 lg:col-span-2">
             <H>The Academy</H>
             <ul>
               <FooterLink to="/academy">The Cipher Course</FooterLink>
@@ -131,9 +142,10 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-1 lg:col-span-2">
             <H>The Stage</H>
             <ul>
+              <FooterLink to="/show">The Show</FooterLink>
               <FooterLink to="/events">The Open Cipher</FooterLink>
               <FooterLink to="/events">Workshops</FooterLink>
               <FooterLink to="/events">The Retreat</FooterLink>
@@ -154,13 +166,17 @@ export default function Footer() {
               letterSpacing: '0.1em',
             }}
           >
-            © {new Date().getFullYear()} CypherOfHealing.com · Est. 2026 · Lawrenceville, GA
+            © {new Date().getFullYear()} CypherOfHealing.com · Est. 2026 · Lawrenceville, GA · Reflective wellness and healing education
           </p>
           <div className="flex gap-6">
-            {['Privacy', 'Terms', 'Contact'].map((label) => (
+            {[
+              { label: 'About', to: '/about' },
+              { label: 'Disclaimer', to: '/disclaimer' },
+              { label: 'Booking', to: '/booking' },
+            ].map(({ label, to }) => (
               <Link
                 key={label}
-                to="#"
+                to={to}
                 style={{
                   fontFamily: '"DM Sans", sans-serif',
                   color: '#4A2C0E',

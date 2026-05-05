@@ -37,6 +37,27 @@ apiClient.interceptors.response.use(
 
 export default apiClient;
 
+function formatDuration(durationMinutes: number) {
+  if (durationMinutes < 60) {
+    return `${durationMinutes} min`;
+  }
+
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+  return minutes === 0 ? `${hours} hr` : `${hours} hr ${minutes} min`;
+}
+
+function formatEventTime(value?: string | null) {
+  if (!value) {
+    return 'TBD';
+  }
+
+  return new Date(value).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // ─────────────────── AUTHENTICATION API ───────────────────────────
 // ═══════════════════════════════════════════════════════════════════
@@ -48,8 +69,10 @@ export const authApi = {
   login: (data: { email: string; password: string }) =>
     apiClient.post('/auth/login', data),
 
-  refreshToken: () =>
-    apiClient.post('/auth/refresh-token'),
+  refreshToken: () => {
+    const token = localStorage.getItem('authToken');
+    return apiClient.post('/auth/refresh-token', token ? { token } : {});
+  },
 
   getProfile: () =>
     apiClient.get('/auth/me'),
@@ -68,7 +91,14 @@ export const authApi = {
 export const academyApi = {
   // Courses
   listCourses: () =>
-    apiClient.get('/academy/courses'),
+    apiClient.get('/academy/courses').then((response) =>
+      ((response?.courses as Array<Record<string, unknown>> | undefined) ?? []).map((course) => ({
+        ...course,
+        slug: String(course.slug ?? ''),
+        price: Number(course.price ?? 0),
+        modules: [],
+      }))
+    ),
 
   getCourseDetail: (courseId: string) =>
     apiClient.get(`/academy/courses/${courseId}`),
@@ -125,16 +155,27 @@ export const academyApi = {
 export const bookingApi = {
   // Services
   listServices: () =>
-    apiClient.get('/booking/services'),
+    apiClient.get('/booking/services').then((response) =>
+      ((response?.services as Array<Record<string, unknown>> | undefined) ?? []).map((service) => ({
+        ...service,
+        duration: formatDuration(Number(service.durationMinutes ?? 0)),
+        price: Number(service.price ?? 0),
+      }))
+    ),
 
   getServiceDetail: (serviceId: string) =>
     apiClient.get(`/booking/services/${serviceId}`),
 
   // Availability
-  getAvailability: (serviceId: string, startDate?: string) =>
-    apiClient.get(`/booking/services/${serviceId}/availability`, {
-      params: { startDate },
-    }),
+  getAvailability: (serviceId: string, date?: string) =>
+    apiClient.get('/booking/availability', {
+      params: { serviceId, date },
+    }).then((response) =>
+      ((response?.availableSlots as string[] | undefined) ?? []).map((time) => ({
+        time,
+        available: true,
+      }))
+    ),
 
   // Appointments
   createAppointment: (data: {
@@ -151,7 +192,7 @@ export const bookingApi = {
     apiClient.get(`/booking/appointments/${appointmentId}`),
 
   cancelAppointment: (appointmentId: string) =>
-    apiClient.post(`/booking/appointments/${appointmentId}/cancel`),
+    apiClient.patch(`/booking/appointments/${appointmentId}/cancel`),
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -161,7 +202,7 @@ export const bookingApi = {
 export const storeApi = {
   // Categories
   listCategories: () =>
-    apiClient.get('/store/categories'),
+    apiClient.get('/store/categories').then((response) => response?.categories ?? []),
 
   getCategoryDetail: (categoryId: string) =>
     apiClient.get(`/store/categories/${categoryId}`),
@@ -170,7 +211,17 @@ export const storeApi = {
   listProducts: (categoryId?: string) =>
     apiClient.get('/store/products', {
       params: categoryId ? { categoryId } : undefined,
-    }),
+    }).then((response) =>
+      ((response?.products as Array<Record<string, unknown>> | undefined) ?? []).map((product) => ({
+        ...product,
+        price: Number(product.price ?? 0),
+        image: Array.isArray(product.images) && product.images.length > 0
+          ? String((product.images[0] as Record<string, unknown>).url ?? '')
+          : '',
+        detail: String(product.shortDescription ?? product.description ?? ''),
+        featured: Boolean(product.isFeatured),
+      }))
+    ),
 
   getProductDetail: (productId: string) =>
     apiClient.get(`/store/products/${productId}`),
@@ -217,17 +268,27 @@ export const storeApi = {
 export const eventsApi = {
   // Events
   listEvents: () =>
-    apiClient.get('/events/events'),
+    apiClient.get('/events').then((response) =>
+      ((response?.events as Array<Record<string, unknown>> | undefined) ?? []).map((event) => ({
+        ...event,
+        slug: String(event.slug ?? ''),
+        date: String(event.scheduledAt ?? ''),
+        time: formatEventTime(String(event.scheduledAt ?? '')),
+        duration: formatDuration(Number(event.durationMinutes ?? 0)),
+        attendees: Number(event.currentAttendees ?? 0),
+        price: Number(event.price ?? 0),
+      }))
+    ),
 
   getEventDetail: (eventId: string) =>
-    apiClient.get(`/events/events/${eventId}`),
+    apiClient.get(`/events/${eventId}`),
 
   // Registration
   registerEvent: (eventId: string, data?: { smsOptIn?: boolean }) =>
-    apiClient.post(`/events/events/${eventId}/register`, data),
+    apiClient.post(`/events/${eventId}/register`, data),
 
   getRegistrations: () =>
-    apiClient.get('/events/registrations'),
+    apiClient.get('/events/my/registrations'),
 
   getRegistrationDetail: (registrationId: string) =>
     apiClient.get(`/events/registrations/${registrationId}`),
