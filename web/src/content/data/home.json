@@ -1,0 +1,51 @@
+{
+  "testimonials": [
+    {
+      "quote": "I came in for a cut and left having talked about my father for the first time in years. That was the first place I felt safe enough to say it out loud.",
+      "name": "Marcus T.",
+      "via": "The Chair"
+    },
+    {
+      "quote": "Station 3 broke something open in me. I finally understood why I react the way I do. The Trigger Tracker changed my relationships.",
+      "name": "DeShawn W.",
+      "via": "The Academy"
+    },
+    {
+      "quote": "The restoration oil sits on my bathroom shelf. Every morning I use it, I remember that care is something I can practice, not just receive.",
+      "name": "Jordan M.",
+      "via": "The Vault"
+    }
+  ],
+  "pathwayRecommendations": {
+    "chair": {
+      "title": "Start with the Chair",
+      "description": "You likely need embodied trust first: ritual, presence, grooming, and a real conversation in a human space.",
+      "path": "/booking",
+      "cta": "Book a Session"
+    },
+    "academy": {
+      "title": "Enter the Academy",
+      "description": "You likely want language, structure, and a repeatable framework for decoding the patterns underneath your life.",
+      "path": "/academy",
+      "cta": "Explore the Course"
+    },
+    "vault": {
+      "title": "Begin with the Vault",
+      "description": "You likely want tactile tools, books, and daily reminders that help you carry the work into ordinary life.",
+      "path": "/books",
+      "cta": "Explore Books and Tools"
+    },
+    "show": {
+      "title": "Watch the Show",
+      "description": "You likely need a low-friction way to feel the voice, worldview, and emotional texture of the brand before choosing a deeper step.",
+      "path": "/show",
+      "cta": "Explore the Show"
+    },
+    "circle": {
+      "title": "Join a Gathering",
+      "description": "You likely want communal learning, live reflection, and accountability with others entering the same work.",
+      "path": "/events",
+      "cta": "View Gatherings"
+    }
+  }
+}

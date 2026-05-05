@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { TrackedLink as Link } from '@/components/TrackedLink';
+import { booksChannelStrategy, booksCollection, booksHero } from '@/content/siteContent';
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -7,24 +8,6 @@ const fade = (delay = 0) => ({
   viewport: { once: true },
   transition: { duration: 0.6, delay, ease: 'easeOut' },
 });
-
-const books = [
-  {
-    title: 'The Cipher of Healing',
-    role: 'Core framework text',
-    desc: 'The primary written expression of the doctrine for readers who want the worldview, language, and architecture of the work in book form.',
-  },
-  {
-    title: 'The Companion Journal',
-    role: 'Reflective practice tool',
-    desc: 'A guided writing companion for turning insight into repeatable reflection, tracking, and daily restoration practice.',
-  },
-  {
-    title: 'Children and Legacy Titles',
-    role: 'Lineage extension',
-    desc: 'Books that widen the work into family, inheritance, and the question of what the next generation receives from our healing.',
-  },
-];
 
 export default function BooksPage() {
   return (
@@ -36,30 +19,31 @@ export default function BooksPage() {
             className="uppercase tracking-widest text-xs mb-5"
             style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C', letterSpacing: '0.25em' }}
           >
-            Books
+            {booksHero.eyebrow}
           </motion.p>
           <motion.h1
             {...fade(0.08)}
             className="text-4xl md:text-6xl font-bold leading-tight mb-6"
             style={{ fontFamily: '"Playfair Display", serif', color: '#F5ECD7' }}
           >
-            The written doorway into the work.
+            {booksHero.title}
           </motion.h1>
           <motion.p
             {...fade(0.16)}
             className="text-lg max-w-3xl leading-relaxed"
             style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE' }}
           >
-            Books are not side products here. They are one of the clearest ways to carry the
-            doctrine home, revisit it slowly, and let the work deepen in private.
+            {booksHero.description}
           </motion.p>
         </div>
       </section>
 
       <section className="py-16 md:py-20">
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-5">
-          {books.map((book, index) => (
-            <motion.div key={book.title} {...fade(index * 0.06)} className="p-6" style={{ backgroundColor: '#E8DCBE', border: '1px solid #8B5E3C' }}>
+          {booksCollection.map((book, index) => (
+            <motion.div key={book.title} {...fade(index * 0.06)} className="overflow-hidden" style={{ backgroundColor: '#E8DCBE', border: '1px solid #8B5E3C' }}>
+              <img src={book.image} alt={book.title} className="w-full object-cover" style={{ height: '220px', filter: 'sepia(0.22) contrast(1.06) brightness(0.88)' }} />
+              <div className="p-6">
               <p className="uppercase tracking-widest text-xs mb-3" style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C', letterSpacing: '0.14em' }}>
                 {book.role}
               </p>
@@ -67,8 +51,12 @@ export default function BooksPage() {
                 {book.title}
               </h2>
               <p style={{ fontFamily: '"Libre Baskerville", serif', color: '#3D2B1F', lineHeight: 1.8 }}>
-                {book.desc}
+                {book.description}
               </p>
+              <p className="mt-4" style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#704214', fontSize: '12px', lineHeight: 1.7 }}>
+                {book.format} · {book.bestFor}
+              </p>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -92,9 +80,7 @@ export default function BooksPage() {
               Channel Strategy
             </p>
             <p style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE', lineHeight: 1.85 }}>
-              Keep books discoverable on major marketplaces while also presenting them on the owned
-              platform as part of a larger restoration journey with bundles, journals, and guided
-              next steps.
+              {booksChannelStrategy}
             </p>
           </motion.div>
         </div>

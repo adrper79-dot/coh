@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { TrackedLink as Link } from '@/components/TrackedLink';
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },

@@ -1,0 +1,82 @@
+{
+  "title": "The Cipher of Healing",
+  "description": "A 6-station guided journey that decodes the language of your wounds, inhabits the zero of the present, and restores the future you were always meant to live.",
+  "quote": "A cipher is code. A zero. A circle. This course gives you both the key and the courage to use it.",
+  "stats": [
+    { "label": "Format", "value": "Video + Workbook" },
+    { "label": "Access", "value": "Lifetime" },
+    { "label": "Level", "value": "All levels" },
+    { "label": "Certificate", "value": "Yes, upon completion" }
+  ],
+  "stations": [
+    { "num": "01", "title": "The Cipher Framework", "desc": "Set your intention. Learn what the cipher means — as code, as zero, as circle. Make the commitment to honesty." },
+    { "num": "02", "title": "Roots of the Past", "desc": "Map your wounds without reliving them. Childhood patterns, family roles, attachment styles — the code you inherited." },
+    { "num": "03", "title": "Breaking the Code", "desc": "Recognize trauma responses in daily life. Name the triggers. Close the gap between stimulus and choice." },
+    { "num": "04", "title": "Healing in Motion", "desc": "Mind-body reset. Cognitive reframing. Rewriting beliefs that were never yours to begin with." },
+    { "num": "05", "title": "Rebuilding Resilience", "desc": "Daily habits that compound. Boundaries as love. The 30-day tracker that keeps the fresh cut clean." },
+    { "num": "06", "title": "The Cipher of the Future", "desc": "Visualize the healed self. Write your Legacy Letter. Declare what you pass forward — and what ends with you." }
+  ],
+  "testimonials": [
+    {
+      "quote": "I've done therapy, journaling, all of it. The Cipher was different. It didn't just ask me to feel — it asked me to decode. By Station 3, I could name what I was doing in real time.",
+      "name": "Kezia M.",
+      "via": "The Cipher"
+    },
+    {
+      "quote": "The Legacy Letter I wrote in Station 6 is the most important thing I've ever put on paper. I never thought about healing as something I was doing for my children too.",
+      "name": "David R.",
+      "via": "Guided Integration"
+    },
+    {
+      "quote": "Station 5 — the resilience practice — is now my morning. I didn't think I was capable of daily practice, but this made it feel like self-respect, not punishment.",
+      "name": "Amara J.",
+      "via": "Immersion Circle"
+    }
+  ],
+  "pricingTiers": [
+    {
+      "name": "The Cipher",
+      "price": "$197",
+      "description": "Full course access, self-paced for life",
+      "features": [
+        "All 6 stations of content",
+        "Downloadable workbooks and exercises",
+        "Lifetime access",
+        "Certificate of completion"
+      ],
+      "cta": "Enroll Now",
+      "highlighted": false,
+      "action": "enroll"
+    },
+    {
+      "name": "The Cipher + Guided Integration",
+      "price": "$297",
+      "description": "Course plus one private integration session",
+      "features": [
+        "Everything in The Cipher",
+        "1 private guided integration session (60 min)",
+        "Personalized integration plan",
+        "Priority email support",
+        "Access to community forums"
+      ],
+      "cta": "Enroll + Book Session",
+      "highlighted": true,
+      "action": "enroll"
+    },
+    {
+      "name": "The Immersion Circle",
+      "price": "$497",
+      "description": "Deep-dive with ongoing support",
+      "features": [
+        "Everything in Cipher + Guided Integration",
+        "3 private guided integration sessions",
+        "Weekly group accountability call",
+        "Custom resilience blueprint",
+        "Inner Circle community access"
+      ],
+      "cta": "Apply for Immersion",
+      "highlighted": false,
+      "action": "apply"
+    }
+  ]
+}

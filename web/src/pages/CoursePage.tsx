@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../stores/auth';
 import { courseFallbackContent } from '@/content/siteContent';
+import { trackEvent } from '@/lib/analytics';
 
 interface Lesson {
   id: string;
@@ -77,6 +78,12 @@ export default function CoursePage() {
   }, [fetchCourse]);
 
   const handleEnroll = async (tier: (typeof courseFallbackContent.pricingTiers)[number]) => {
+    trackEvent('course_offer_clicked', {
+      courseSlug: slug,
+      offerAction: tier.action,
+      offerName: tier.name,
+    });
+
     if (!token) {
       navigate('/login');
       return;

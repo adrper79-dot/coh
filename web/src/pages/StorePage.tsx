@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { TrackedLink as Link } from '@/components/TrackedLink';
 import { useCartStore } from '@/stores/cart';
 import { storeApi } from '@/lib/api';
+import { trackEvent } from '@/lib/analytics';
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -317,7 +318,15 @@ export default function StorePage() {
                         ${featured.price}
                       </span>
                       <button
-                        onClick={() => addItem(featured, 1)}
+                        onClick={() => {
+                          trackEvent('store_add_to_cart_clicked', {
+                            productId: featured.id,
+                            productName: featured.name,
+                            categoryId: featured.categoryId,
+                            placement: 'featured',
+                          });
+                          addItem(featured, 1);
+                        }}
                         className="px-8 py-3 uppercase text-sm tracking-widest transition-opacity hover:opacity-80"
                         style={{
                           fontFamily: 'DM Sans, sans-serif',
@@ -410,7 +419,15 @@ export default function StorePage() {
                           ${product.price}
                         </span>
                         <button
-                          onClick={() => addItem(product, 1)}
+                          onClick={() => {
+                            trackEvent('store_add_to_cart_clicked', {
+                              productId: product.id,
+                              productName: product.name,
+                              categoryId: product.categoryId,
+                              placement: 'grid',
+                            });
+                            addItem(product, 1);
+                          }}
                           className="transition-colors"
                           style={{
                             fontFamily: 'DM Sans, sans-serif',

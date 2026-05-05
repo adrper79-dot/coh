@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { TrackedLink as Link } from '@/components/TrackedLink';
 import { homeTestimonials, pathwayRecommendations } from '@/content/siteContent';
+import { trackEvent } from '@/lib/analytics';
 
 // ——— Reusable pieces ———
 
@@ -254,7 +255,15 @@ function PathwaySelector() {
                 <motion.div key={option.key} {...fade(index * 0.05)}>
                   <button
                     type="button"
-                    onClick={() => setSelected(option.key)}
+                    onClick={() => {
+                      if (selected !== option.key) {
+                        trackEvent('guided_intake_selection_changed', {
+                          selection: option.key,
+                          recommendedDestination: recommendation.path,
+                        });
+                      }
+                      setSelected(option.key);
+                    }}
                     className="block p-5 w-full text-left"
                     style={{
                       backgroundColor: isSelected ? '#2C1810' : '#F5ECD7',
@@ -283,7 +292,15 @@ function PathwaySelector() {
             {pathwayRecommendations[selected].description}
           </p>
           <div className="mt-6">
-            <Link to={pathwayRecommendations[selected].path} className="btn btn-primary" style={{ fontSize: '13px' }}>
+            <Link
+              to={pathwayRecommendations[selected].path}
+              className="btn btn-primary"
+              style={{ fontSize: '13px' }}
+              eventName="guided_intake_recommendation_clicked"
+              trackingLabel={pathwayRecommendations[selected].title}
+              trackingContext="home_guided_intake"
+              trackingProperties={{ selectedPathway: selected }}
+            >
               {pathwayRecommendations[selected].cta}
             </Link>
           </div>

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { eventsApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
+import { trackEvent } from '@/lib/analytics';
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -96,6 +97,12 @@ export default function EventsPage() {
   }, []);
 
   const handleRegister = async (event: Event) => {
+    trackEvent('event_registration_clicked', {
+      eventSlug: event.slug,
+      eventTitle: event.title,
+      eventType: event.type ?? 'unknown',
+    });
+
     if (!user) {
       navigate('/login', { state: { redirect: '/events' } });
       return;

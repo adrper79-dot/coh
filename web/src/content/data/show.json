@@ -1,0 +1,46 @@
+{
+  "hero": {
+    "eyebrow": "The Show",
+    "title": "The barber chair as a public front door.",
+    "description": "The show translates Cypher of Healing into a visible, shareable experience. It is where grooming, conversation, culture, and reflection meet in public view.",
+    "image": "/images/craft/restoration.jpg"
+  },
+  "featuredEpisode": {
+    "title": "Episode 01 — The Chair and the Father Wound",
+    "runtime": "18 minutes",
+    "focus": "Barber-chair conversation",
+    "description": "A client enters the chair carrying silence around his father. The conversation stays grounded in dignity, grooming, and the question of what men inherit before they ever choose for themselves.",
+    "image": "/images/craft/consultation.jpg",
+    "ctaLabel": "Book the kind of conversation this points toward",
+    "ctaPath": "/booking"
+  },
+  "formatPoints": [
+    "A client enters the chair and a real theme is named.",
+    "The service unfolds with dignity, rhythm, and conversation.",
+    "The episode stays grounded in reflection, not spectacle.",
+    "Each conversation ends with a clear Cipher takeaway."
+  ],
+  "guardrails": [
+    "The show is educational and reflective, not therapy.",
+    "Conversations should honor consent, dignity, and non-exploitative storytelling.",
+    "The point is restoration and understanding, not emotional performance.",
+    "Every episode should route viewers into a next step inside the wider ecosystem."
+  ],
+  "episodeSeeds": [
+    {
+      "title": "The Chair and the Father Wound",
+      "format": "Barber-chair conversation",
+      "takeaway": "Naming what was inherited is often the first act of restoration."
+    },
+    {
+      "title": "Why Men Perform Strength Instead of Practice It",
+      "format": "Guided reflection episode",
+      "takeaway": "Discipline without reflection becomes armor instead of growth."
+    },
+    {
+      "title": "Style, Dignity, and the Outer Reflection",
+      "format": "Ritual and grooming episode",
+      "takeaway": "How you carry yourself can reinforce what you believe about your worth."
+    }
+  ]
+}

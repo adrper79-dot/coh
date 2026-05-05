@@ -1,0 +1,34 @@
+{
+  "hero": {
+    "eyebrow": "Books",
+    "title": "The written doorway into the work.",
+    "description": "Books are not side products here. They are one of the clearest ways to carry the doctrine home, revisit it slowly, and let the work deepen in private."
+  },
+  "books": [
+    {
+      "title": "The Cipher of Healing",
+      "role": "Core framework text",
+      "format": "Book + workbook companion",
+      "image": "/images/products/cipher-workbook.jpg",
+      "description": "The primary written expression of the doctrine for readers who want the worldview, language, and architecture of the work in book form.",
+      "bestFor": "Readers who want the full framework before joining a live experience."
+    },
+    {
+      "title": "The Companion Journal",
+      "role": "Reflective practice tool",
+      "format": "Journal",
+      "image": "/images/products/legacy-journal.jpg",
+      "description": "A guided writing companion for turning insight into repeatable reflection, tracking, and daily restoration practice.",
+      "bestFor": "People who need a private, disciplined way to keep the work alive between sessions."
+    },
+    {
+      "title": "The Resilience Bundle",
+      "role": "Integrated ritual set",
+      "format": "Bundle",
+      "image": "/images/products/resilience-bundle.jpg",
+      "description": "A tactile bundle of tools designed to make care embodied, visible, and repeatable in ordinary life.",
+      "bestFor": "People ready to translate insight into a lived ritual of restoration."
+    }
+  ],
+  "channelStrategy": "Keep books discoverable on major marketplaces while also presenting them on the owned platform as part of a larger restoration journey with bundles, journals, and guided next steps."
+}

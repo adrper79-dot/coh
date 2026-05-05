@@ -1,0 +1,33 @@
+{
+  "hero": {
+    "eyebrow": "Founder Story",
+    "title": "The work behind the work.",
+    "description": "Cypher of Healing is built on a founder vision that treats the chair as sanctuary, conversation as ritual, and restoration as something culturally rooted, embodied, and teachable.",
+    "image": "/images/hero/hero-main.jpg"
+  },
+  "bio": [
+    "Cypher of Healing starts from the recognition that people often begin restoration in trusted human spaces long before they begin it in formal institutions.",
+    "The barbershop is one of those spaces. It holds memory, honesty, rhythm, style, and care. This brand extends that lived truth into a broader system of learning, products, gatherings, and reflective conversation.",
+    "The aim is not to imitate therapy. The aim is to build a dignified restorative ecosystem that helps people begin, continue, and sustain the work of healing."
+  ],
+  "principles": [
+    "Barbering as a ritual of care, precision, and presence.",
+    "Healing as a process of decoding inherited patterns.",
+    "Style and grooming as outward declarations of inner dignity.",
+    "Education and community as the bridge between insight and practice."
+  ],
+  "milestones": [
+    {
+      "label": "The Chair",
+      "detail": "Start in trusted human presence before asking someone to enter deeper work."
+    },
+    {
+      "label": "The Cipher",
+      "detail": "Give people a language, a framework, and a repeatable path for what they are carrying."
+    },
+    {
+      "label": "The Circle",
+      "detail": "Move from private insight into communal accountability and practiced restoration."
+    }
+  ]
+}

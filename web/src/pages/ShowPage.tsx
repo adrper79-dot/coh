@@ -1,6 +1,12 @@
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { showEpisodeSeeds, showFormatPoints, showGuardrails } from '@/content/siteContent';
+import { TrackedLink as Link } from '@/components/TrackedLink';
+import {
+  showEpisodeSeeds,
+  showFeaturedEpisode,
+  showFormatPoints,
+  showGuardrails,
+  showHero,
+} from '@/content/siteContent';
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -13,30 +19,79 @@ export default function ShowPage() {
   return (
     <div style={{ backgroundColor: '#F5ECD7', minHeight: '100vh' }}>
       <section className="py-20 md:py-28" style={{ backgroundColor: '#2C1810' }}>
-        <div className="max-w-5xl mx-auto px-6">
-          <motion.p
-            {...fade(0)}
-            className="uppercase tracking-widest text-xs mb-5"
-            style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C', letterSpacing: '0.25em' }}
-          >
-            The Show
-          </motion.p>
-          <motion.h1
-            {...fade(0.08)}
-            className="text-4xl md:text-6xl font-bold leading-tight mb-6"
-            style={{ fontFamily: '"Playfair Display", serif', color: '#F5ECD7' }}
-          >
-            The barber chair as a public front door.
-          </motion.h1>
-          <motion.p
-            {...fade(0.16)}
-            className="text-lg max-w-3xl leading-relaxed"
-            style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE' }}
-          >
-            The show translates Cypher of Healing into a visible, shareable experience. It is where
-            grooming, conversation, culture, and reflection meet in public view. It lets people feel
-            the voice of the brand before they ever book, enroll, or join a gathering.
-          </motion.p>
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-10 items-center">
+          <motion.div {...fade(0.02)} className="overflow-hidden" style={{ border: '1px solid rgba(201,168,76,0.24)' }}>
+            <img
+              src={showHero.image}
+              alt={showHero.title}
+              className="w-full h-full object-cover"
+              style={{ minHeight: '320px', filter: 'sepia(0.28) contrast(1.08) brightness(0.74)' }}
+            />
+          </motion.div>
+          <div>
+            <motion.p
+              {...fade(0)}
+              className="uppercase tracking-widest text-xs mb-5"
+              style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C', letterSpacing: '0.25em' }}
+            >
+              {showHero.eyebrow}
+            </motion.p>
+            <motion.h1
+              {...fade(0.08)}
+              className="text-4xl md:text-6xl font-bold leading-tight mb-6"
+              style={{ fontFamily: '"Playfair Display", serif', color: '#F5ECD7' }}
+            >
+              {showHero.title}
+            </motion.h1>
+            <motion.p
+              {...fade(0.16)}
+              className="text-lg max-w-3xl leading-relaxed"
+              style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE' }}
+            >
+              {showHero.description} It lets people feel the voice of the brand before they ever
+              book, enroll, or join a gathering.
+            </motion.p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 md:py-20">
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-10 items-center">
+          <motion.div {...fade()}>
+            <p className="uppercase tracking-widest text-xs mb-4" style={{ fontFamily: 'DM Sans, sans-serif', color: '#C9A84C', letterSpacing: '0.2em' }}>
+              Flagship Episode Direction
+            </p>
+            <h2 className="mb-4" style={{ fontFamily: '"Playfair Display", serif', color: '#2C1810', fontSize: '2.2rem' }}>
+              {showFeaturedEpisode.title}
+            </h2>
+            <p className="mb-5" style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#8B5E3C', fontSize: '12px', letterSpacing: '0.08em' }}>
+              {showFeaturedEpisode.focus} · {showFeaturedEpisode.runtime}
+            </p>
+            <p style={{ fontFamily: '"Libre Baskerville", serif', color: '#3D2B1F', lineHeight: 1.85 }}>
+              {showFeaturedEpisode.description}
+            </p>
+            <div className="mt-6">
+              <Link
+                to={showFeaturedEpisode.ctaPath}
+                className="btn btn-primary"
+                style={{ fontSize: '13px' }}
+                eventName="show_featured_episode_cta_clicked"
+                trackingContext="show_featured_episode"
+                trackingLabel={showFeaturedEpisode.title}
+              >
+                {showFeaturedEpisode.ctaLabel}
+              </Link>
+            </div>
+          </motion.div>
+
+          <motion.div {...fade(0.08)} className="overflow-hidden" style={{ border: '1px solid #8B5E3C' }}>
+            <img
+              src={showFeaturedEpisode.image}
+              alt={showFeaturedEpisode.title}
+              className="w-full h-full object-cover"
+              style={{ minHeight: '360px', filter: 'sepia(0.32) contrast(1.08) brightness(0.8)' }}
+            />
+          </motion.div>
         </div>
       </section>
 
@@ -75,7 +130,7 @@ export default function ShowPage() {
               Recommended format
             </h2>
             <div className="space-y-3">
-              {formatPoints.map((point, index) => (
+              {showFormatPoints.map((point, index) => (
                 <div key={point} className="flex gap-3">
                   <span style={{ fontFamily: '"IBM Plex Mono", monospace', color: '#C9A84C', flexShrink: 0 }}>
                     {String(index + 1).padStart(2, '0')}
@@ -93,7 +148,7 @@ export default function ShowPage() {
               Editorial guardrails
             </h2>
             <div className="space-y-3">
-              {guardrails.map((point) => (
+              {showGuardrails.map((point) => (
                 <p key={point} style={{ fontFamily: '"Libre Baskerville", serif', color: '#E8DCBE', lineHeight: 1.8 }}>
                   {point}
                 </p>
