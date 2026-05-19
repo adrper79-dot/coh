@@ -27,6 +27,7 @@ export interface UserFilter {
   searchTerm?: string;
   dateFrom?: string;
   dateTo?: string;
+  [key: string]: unknown;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -52,6 +53,7 @@ export interface BookingFilter {
   dateFrom?: string;
   dateTo?: string;
   searchTerm?: string;
+  [key: string]: unknown;
 }
 
 // ═══════════════════════════════════════════════════════════════════
