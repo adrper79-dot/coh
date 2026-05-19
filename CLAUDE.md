@@ -23,6 +23,17 @@ All five streams share a unified users table with `stripeCustomerId`. Cross-stre
 activity is tracked through the `activity_log` table which can trigger actions across
 streams (e.g. course completion unlocking Inner Circle eligibility).
 
+### Supporting surfaces
+
+In addition to the five revenue streams above, the platform exposes supporting
+content and operational surfaces:
+
+| Surface | Mount | Purpose |
+|---------|-------|---------|
+| **The Show** | `/api/show` | Episodic content / podcast feed (`episodes` table) — public list + slug detail, with membership-gated stream UIDs for paid episodes. Admin handlers manage publishing. |
+| **Comms** | `/api/comms` | Internal SMS reminders + Telnyx RTC video rooms for The Chair appointments and The Stage events. |
+| **Webhooks** | `/api/webhooks` | Inbound integrations (Stripe, Telnyx). Signature-verified, no auth chain. |
+
 ## Stack
 
 | Layer | Technology |
@@ -80,6 +91,7 @@ cd client && npm run deploy  # wrangler pages deploy dist/
 - `courses`, `modules`, `lessons`, `enrollments`, `progress` — The Academy
 - `events`, `registrations` — The Stage
 - `memberships`, `consultations` — Inner Circle
+- `episodes` — The Show (supporting surface; see `/api/show`)
 - `activity_log` — cross-stream event log, append-only
 
 ## Session Start Checklist
