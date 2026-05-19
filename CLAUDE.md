@@ -53,10 +53,16 @@ streams (e.g. course completion unlocking Inner Circle eligibility).
 
 | Surface | URL |
 |---------|-----|
-| Production | https://cypherofhealing.com |
-| Worker API health | `curl https://coh.adrper79.workers.dev/health` |
+| Production (primary) | https://cypherofhealing.com |
+| Production (alias) | https://cipherofhealing.com |
+| API (primary) | https://api.cypherofhealing.com |
+| API (alias) | https://api.cipherofhealing.com |
+| Worker name | `cypher-of-healing-api` (per `wrangler.jsonc`) |
+| Worker health (workers.dev fallback) | `curl https://cypher-of-healing-api.adrper79.workers.dev/health` |
 
-A fix is done when `curl https://coh.adrper79.workers.dev/health` returns `200`.
+Both `cypher*` and `cipher*` spellings are intentional aliases of the same product; the worker serves both identically.
+
+A fix is done when `curl https://api.cypherofhealing.com/health` AND `curl https://api.cipherofhealing.com/health` both return `200`.
 
 ## Commands
 

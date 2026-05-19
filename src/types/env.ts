@@ -45,6 +45,7 @@ export type Env = {
   // Vars
   ENVIRONMENT: string;
   CORS_ORIGIN: string;
+  ALT_ORIGINS?: string; // comma-separated additional allowed origins (e.g. cipherofhealing.com)
   APP_NAME: string;
 };
 
