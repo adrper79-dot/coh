@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../stores/auth';
 import { courseFallbackContent } from '@/content/siteContent';
 import { trackEvent } from '@/lib/analytics';
+import { API_BASE_URL } from '../lib/apiBase';
 
 interface Lesson {
   id: string;
@@ -39,7 +40,7 @@ interface CourseDetail {
   enrolled?: boolean;
 }
 
-const API = import.meta.env.VITE_API_URL ?? 'https://cypher-of-healing-api.workers.dev';
+const API = API_BASE_URL;
 
 export default function CoursePage() {
   const { slug } = useParams<{ slug: string }>();

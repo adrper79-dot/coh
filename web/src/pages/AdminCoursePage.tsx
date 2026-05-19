@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../stores/auth';
+import { API_BASE_URL } from '../lib/apiBase';
 
 interface CourseRow {
   id: string;
@@ -41,7 +42,7 @@ interface Analytics {
   }>;
 }
 
-const API = import.meta.env.VITE_API_URL ?? 'https://cypher-of-healing-api.workers.dev';
+const API = API_BASE_URL;
 
 type TabId = 'overview' | 'courses' | 'students' | 'create';
 

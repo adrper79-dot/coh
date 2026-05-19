@@ -52,6 +52,21 @@
     "ENVIRONMENT": "production",
     "CORS_ORIGIN": "https://cypherofhealing.com",
     "APP_NAME": "CypherOfHealing"
+  },
+
+  // Production-environment override. Wrangler picks this up when deploying
+  // with `--env production`. We deliberately set `ENVIRONMENT=production`
+  // here so the destructive `/__db/reset` + `/__db/stripe-bootstrap` routes
+  // refuse to run, even if someone calls them from outside auth middleware.
+  // Preview / staging environments should override `ENVIRONMENT=staging`.
+  "env": {
+    "production": {
+      "vars": {
+        "ENVIRONMENT": "production",
+        "CORS_ORIGIN": "https://cypherofhealing.com",
+        "APP_NAME": "CypherOfHealing"
+      }
+    }
   }
 
   // Secrets (set via `wrangler secret put`):

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { useAuthStore } from '../stores/auth';
 import AudioPlayer from '../components/AudioPlayer';
+import { API_BASE_URL } from '../lib/apiBase';
 
 interface Lesson {
   id: string;
@@ -35,7 +36,7 @@ interface CourseDetail {
   modules: Module[];
 }
 
-const API = import.meta.env.VITE_API_URL ?? 'https://cypher-of-healing-api.workers.dev';
+const API = API_BASE_URL;
 
 export default function LessonPage() {
   const { courseSlug, lessonId } = useParams<{ courseSlug: string; lessonId: string }>();
