@@ -33,12 +33,17 @@ app.use('*', logger());
 app.use('*', prettyJSON());
 app.use('*', responseMiddleware());
 app.use('*', async (c, next) => {
+  const allowed = [
+    c.env.CORS_ORIGIN,
+    ...(c.env.ALT_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean) ?? []),
+  ];
   const corsMiddleware = cors({
-    origin: c.env.CORS_ORIGIN,
+    origin: (origin) => (allowed.includes(origin) ? origin : null),
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
     exposeHeaders: ['X-Request-Id', 'X-API-Version', 'X-RateLimit-Limit', 'X-RateLimit-Remaining'],
     maxAge: 86400,
+    credentials: true,
   });
   return corsMiddleware(c, next);
 });

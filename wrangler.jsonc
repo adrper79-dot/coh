@@ -11,9 +11,12 @@
     { "type": "Text", "globs": ["**/*.sql"], "fallthrough": true }
   ],
 
-  // Custom domain — never expose .workers.dev to end users
+  // Custom domains — never expose .workers.dev to end users.
+  // Both spellings (cypher* and cipher*) are intentional aliases of the
+  // same product; the worker serves both identically.
   "routes": [
-    { "pattern": "api.cypherofhealing.com", "custom_domain": true }
+    { "pattern": "api.cypherofhealing.com", "custom_domain": true },
+    { "pattern": "api.cipherofhealing.com", "custom_domain": true }
   ],
 
   // Neon Postgres via Hyperdrive
@@ -51,6 +54,7 @@
   "vars": {
     "ENVIRONMENT": "production",
     "CORS_ORIGIN": "https://cypherofhealing.com",
+    "ALT_ORIGINS": "https://cipherofhealing.com",
     "APP_NAME": "CypherOfHealing"
   }
 
