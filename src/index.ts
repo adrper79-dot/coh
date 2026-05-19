@@ -164,12 +164,12 @@ app.onError((err, c) => createErrorHandler(c.env.ENVIRONMENT === 'development')(
 // errors in fetch/scheduled are auto-captured. Reads DSN from the Worker
 // binding (`env.SENTRY_DSN`) — never `process.env`. Init is per-request, so
 // no DSN simply means Sentry is a no-op for that request.
-const handler = {
-  fetch: (request: Request, env: Env, ctx: ExecutionContext) => app.fetch(request, env, ctx),
-  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+const handler: ExportedHandler<Env> = {
+  fetch: (request, env, ctx) => app.fetch(request, env, ctx),
+  scheduled: (_event, env, ctx) => {
     ctx.waitUntil(sendAppointmentReminders(env));
   },
-} satisfies ExportedHandler<Env>;
+};
 
 export default Sentry.withSentry(
   (env: Env) => ({
