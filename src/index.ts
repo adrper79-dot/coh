@@ -68,6 +68,18 @@ app.get('/', (c) => {
   });
 });
 
+// ─── Lightweight health check (CLAUDE.md fix-done contract) ───
+// `curl https://cypher-of-healing-api.adrper79.workers.dev/health` must return 200.
+app.get('/health', (c) => {
+  return c.json({
+    ok: true,
+    version: '1.0.0',
+    environment: c.env.ENVIRONMENT ?? 'unknown',
+    timestamp: new Date().toISOString(),
+    requestId: nanoid(),
+  });
+});
+
 // ─── API Documentation endpoint ───
 app.get('/api/docs', (c) => {
   return c.json({
