@@ -123,7 +123,7 @@ export default function FilterPanel({
                 {field.type === 'select' && field.options && (
                   <select
                     id={field.id}
-                    value={filters[field.id] || ''}
+                    value={(filters[field.id] as string | undefined) ?? ''}
                     onChange={(e) => handleFilterChange(field.id, e.target.value || null)}
                     className="w-full px-3 py-2 rounded text-sm"
                     style={{
@@ -147,7 +147,7 @@ export default function FilterPanel({
                     id={field.id}
                     type="text"
                     placeholder={field.placeholder}
-                    value={filters[field.id] || ''}
+                    value={(filters[field.id] as string | undefined) ?? ''}
                     onChange={(e) =>
                       handleFilterChange(field.id, e.target.value || null)
                     }
@@ -165,7 +165,7 @@ export default function FilterPanel({
                   <input
                     id={field.id}
                     type="date"
-                    value={filters[field.id] || ''}
+                    value={(filters[field.id] as string | undefined) ?? ''}
                     onChange={(e) =>
                       handleFilterChange(field.id, e.target.value || null)
                     }
@@ -184,7 +184,7 @@ export default function FilterPanel({
                     id={field.id}
                     type="number"
                     placeholder={field.placeholder}
-                    value={filters[field.id] || ''}
+                    value={(filters[field.id] as number | string | undefined) ?? ''}
                     onChange={(e) =>
                       handleFilterChange(
                         field.id,

@@ -150,7 +150,7 @@ export default function CoursePage() {
   const displayQuote = courseFallbackContent.quote;
   const displayStats = courseFallbackContent.stats;
   const displayStations = courseFallbackContent.stations;
-  const displayTestimonials = courseFallbackContent.testimonials;
+  // const displayTestimonials = courseFallbackContent.testimonials; // pending testimonials section design
   const pricingTiers = courseFallbackContent.pricingTiers;
 
   return (

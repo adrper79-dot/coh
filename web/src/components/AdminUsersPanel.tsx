@@ -34,7 +34,7 @@ export default function AdminUsersPanel() {
     totalPages: 0,
   });
   const [filters, setFilters] = useState<UserFilter>({});
-  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  // TODO: re-introduce row selection state once the detail drawer ships.
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -141,7 +141,7 @@ export default function AdminUsersPanel() {
       sortable: true,
       render: (value, row) => (
         <div>
-          <p style={{ fontWeight: 600, color: '#F5ECD7' }}>{value}</p>
+          <p style={{ fontWeight: 600, color: '#F5ECD7' }}>{String(value ?? '')}</p>
           <p className="text-xs" style={{ color: '#704214' }}>
             {row.email}
           </p>
@@ -166,7 +166,7 @@ export default function AdminUsersPanel() {
             border: '1px solid #3D2B1F',
           }}
         >
-          {value}
+          {String(value ?? '')}
         </span>
       ),
     },
@@ -192,7 +192,7 @@ export default function AdminUsersPanel() {
                   : '#F44336',
           }}
         >
-          {value}
+          {String(value ?? '')}
         </span>
       ),
     },

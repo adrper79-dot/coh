@@ -88,7 +88,7 @@ export default function AdminReviewsPanel() {
       sortable: true,
       render: (value, row) => (
         <div>
-          <p style={{ fontWeight: 600, color: '#F5ECD7' }}>{value}</p>
+          <p style={{ fontWeight: 600, color: '#F5ECD7' }}>{String(value ?? '')}</p>
           <p className="text-xs" style={{ color: '#704214' }}>
             {row.userEmail}
           </p>
@@ -111,7 +111,7 @@ export default function AdminReviewsPanel() {
       label: 'Title',
       render: (value, row) => (
         <div>
-          <p style={{ fontWeight: 600 }}>{value}</p>
+          <p style={{ fontWeight: 600 }}>{String(value ?? '')}</p>
           <p className="text-xs mt-1" style={{ color: '#8B5E3C', height: '2rem' }}>
             {row.comment.substring(0, 80)}...
           </p>
@@ -143,7 +143,7 @@ export default function AdminReviewsPanel() {
                     : '#FF9800',
           }}
         >
-          {value}
+          {String(value ?? '')}
         </span>
       ),
     },
