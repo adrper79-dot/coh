@@ -243,7 +243,7 @@ function PathwaySelector() {
             If you are not sure where to begin, start here.
           </h2>
           <p className="mt-5" style={{ fontFamily: '"Libre Baskerville", Georgia, serif', color: '#704214', fontSize: '16px', lineHeight: 1.85 }}>
-            Choose the statement that feels most true right now. The goal is not to diagnose you. It is to route you into the right doorway.
+            Choose the statement that feels most true right now. The goal is not to label you. It is to route you into the right doorway.
           </p>
 
           <div className="mt-8 grid grid-cols-1 gap-3">
