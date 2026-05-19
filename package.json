@@ -19,6 +19,7 @@
     "@elevenlabs/elevenlabs-js": "^2.41.1",
     "@hono/zod-validator": "^0.5.0",
     "@neondatabase/serverless": "^0.10.0",
+    "@sentry/cloudflare": "^10.53.1",
     "drizzle-orm": "^0.39.0",
     "hono": "^4.7.0",
     "jose": "^6.0.0",

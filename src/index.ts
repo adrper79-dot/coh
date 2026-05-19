@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
 import { nanoid } from 'nanoid';
+import * as Sentry from '@sentry/cloudflare';
 import type { Env, Variables } from './types/env';
 import { responseMiddleware, errorResponse } from './middleware/response';
 import { createErrorHandler, ErrorCodes } from './middleware/errors';
@@ -159,9 +160,24 @@ app.notFound((c) => {
 // ─── Error handler ───
 app.onError((err, c) => createErrorHandler(c.env.ENVIRONMENT === 'development')(err, c));
 
-export default {
+// Wrap the worker handler with Sentry's official Cloudflare SDK so unhandled
+// errors in fetch/scheduled are auto-captured. Reads DSN from the Worker
+// binding (`env.SENTRY_DSN`) — never `process.env`. Init is per-request, so
+// no DSN simply means Sentry is a no-op for that request.
+const handler = {
   fetch: (request: Request, env: Env, ctx: ExecutionContext) => app.fetch(request, env, ctx),
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(sendAppointmentReminders(env));
   },
-};
+} satisfies ExportedHandler<Env>;
+
+export default Sentry.withSentry(
+  (env: Env) => ({
+    dsn: env.SENTRY_DSN,
+    environment: env.ENVIRONMENT,
+    // Keep traces light; bump in staging if we want richer perf data.
+    tracesSampleRate: 0.1,
+    sendDefaultPii: false,
+  }),
+  handler,
+);
