@@ -6,6 +6,32 @@ import type { Env, Variables } from '../types/env';
 const adminDb = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 /**
+ * Hard guard: refuse destructive admin-db operations in production.
+ *
+ * Background: `/__db/reset` and `/__db/stripe-bootstrap` were previously
+ * gated only on `users.count === 0`. That guard is fine for first-boot, but
+ * a single inadvertent `TRUNCATE users` (or a brand-new branch that hasn't
+ * seeded yet) would re-open the door to a full schema drop in production.
+ * We now require `ENVIRONMENT !== 'production'` *in addition to* the
+ * existing data-loss guards.
+ */
+function isNonProduction(env: Env): boolean {
+  const envName = (env.ENVIRONMENT ?? '').toLowerCase();
+  return envName === 'staging' || envName === 'development' || envName === 'preview' || envName === 'test';
+}
+
+function refuseInProduction(env: Env): Response | null {
+  if (isNonProduction(env)) return null;
+  return new Response(
+    JSON.stringify({
+      ok: false,
+      error: 'Refusing to run destructive admin-db route in production. Set ENVIRONMENT=staging on a non-prod worker.',
+    }),
+    { status: 403, headers: { 'content-type': 'application/json' } },
+  );
+}
+
+/**
  * Run pending Drizzle migrations against the Neon database via the
  * Hyperdrive binding. Idempotent — already-applied migrations are skipped.
  *
@@ -89,6 +115,9 @@ adminDb.post('/migrate', async (c) => {
  * POST /__db/reset
  */
 adminDb.post('/reset', async (c) => {
+  const refusal = refuseInProduction(c.env);
+  if (refusal) return refusal;
+
   const connection = c.env.DATABASE_URL ?? c.env.HYPERDRIVE.connectionString;
   const pool = new Pool({ connectionString: connection });
   try {
@@ -126,6 +155,9 @@ adminDb.post('/reset', async (c) => {
  * POST /__db/stripe-bootstrap
  */
 adminDb.post('/stripe-bootstrap', async (c) => {
+  const refusal = refuseInProduction(c.env);
+  if (refusal) return refusal;
+
   const connection = c.env.DATABASE_URL ?? c.env.HYPERDRIVE.connectionString;
   const pool = new Pool({ connectionString: connection });
 
