@@ -120,10 +120,10 @@ export default function BookingPage() {
         return;
       }
 
-      const result = await bookingApi.createAppointment({
+      const result = (await bookingApi.createAppointment({
         serviceId: selectedService,
         scheduledAt: scheduledAt.toISOString(),
-      });
+      })) as { checkoutUrl?: string } | undefined;
 
       if (result?.checkoutUrl) {
         window.location.href = result.checkoutUrl;

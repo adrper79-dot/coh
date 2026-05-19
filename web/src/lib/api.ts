@@ -78,14 +78,15 @@ export const authApi = {
 export const academyApi = {
   // Courses
   listCourses: () =>
-    apiClient.get('/academy/courses').then((response) =>
-      ((response?.courses as Array<Record<string, unknown>> | undefined) ?? []).map((course) => ({
+    apiClient.get('/academy/courses').then((response: unknown) => {
+      const data = response as { courses?: Array<Record<string, unknown>> } | undefined;
+      return (data?.courses ?? []).map((course) => ({
         ...course,
         slug: String(course.slug ?? ''),
         price: Number(course.price ?? 0),
         modules: [],
-      }))
-    ),
+      }));
+    }),
 
   getCourseDetail: (courseId: string) =>
     apiClient.get(`/academy/courses/${courseId}`),
@@ -142,13 +143,14 @@ export const academyApi = {
 export const bookingApi = {
   // Services
   listServices: () =>
-    apiClient.get('/booking/services').then((response) =>
-      ((response?.services as Array<Record<string, unknown>> | undefined) ?? []).map((service) => ({
+    apiClient.get('/booking/services').then((response: unknown) => {
+      const data = response as { services?: Array<Record<string, unknown>> } | undefined;
+      return (data?.services ?? []).map((service) => ({
         ...service,
         duration: formatDuration(Number(service.durationMinutes ?? 0)),
         price: Number(service.price ?? 0),
-      }))
-    ),
+      }));
+    }),
 
   getServiceDetail: (serviceId: string) =>
     apiClient.get(`/booking/services/${serviceId}`),
@@ -157,12 +159,13 @@ export const bookingApi = {
   getAvailability: (serviceId: string, date?: string) =>
     apiClient.get('/booking/availability', {
       params: { serviceId, date },
-    }).then((response) =>
-      ((response?.availableSlots as string[] | undefined) ?? []).map((time) => ({
+    }).then((response: unknown) => {
+      const data = response as { availableSlots?: string[] } | undefined;
+      return (data?.availableSlots ?? []).map((time) => ({
         time,
         available: true,
-      }))
-    ),
+      }));
+    }),
 
   // Appointments
   createAppointment: (data: {
@@ -189,7 +192,10 @@ export const bookingApi = {
 export const storeApi = {
   // Categories
   listCategories: () =>
-    apiClient.get('/store/categories').then((response) => response?.categories ?? []),
+    apiClient.get('/store/categories').then((response: unknown) => {
+      const data = response as { categories?: unknown[] } | undefined;
+      return data?.categories ?? [];
+    }),
 
   getCategoryDetail: (categoryId: string) =>
     apiClient.get(`/store/categories/${categoryId}`),
@@ -198,8 +204,9 @@ export const storeApi = {
   listProducts: (categoryId?: string) =>
     apiClient.get('/store/products', {
       params: categoryId ? { categoryId } : undefined,
-    }).then((response) =>
-      ((response?.products as Array<Record<string, unknown>> | undefined) ?? []).map((product) => ({
+    }).then((response: unknown) => {
+      const data = response as { products?: Array<Record<string, unknown>> } | undefined;
+      return (data?.products ?? []).map((product) => ({
         ...product,
         price: Number(product.price ?? 0),
         image: Array.isArray(product.images) && product.images.length > 0
@@ -207,8 +214,8 @@ export const storeApi = {
           : '',
         detail: String(product.shortDescription ?? product.description ?? ''),
         featured: Boolean(product.isFeatured),
-      }))
-    ),
+      }));
+    }),
 
   getProductDetail: (productId: string) =>
     apiClient.get(`/store/products/${productId}`),
@@ -255,8 +262,9 @@ export const storeApi = {
 export const eventsApi = {
   // Events
   listEvents: () =>
-    apiClient.get('/events').then((response) =>
-      ((response?.events as Array<Record<string, unknown>> | undefined) ?? []).map((event) => ({
+    apiClient.get('/events').then((response: unknown) => {
+      const data = response as { events?: Array<Record<string, unknown>> } | undefined;
+      return (data?.events ?? []).map((event) => ({
         ...event,
         slug: String(event.slug ?? ''),
         date: String(event.scheduledAt ?? ''),
@@ -264,8 +272,8 @@ export const eventsApi = {
         duration: formatDuration(Number(event.durationMinutes ?? 0)),
         attendees: Number(event.currentAttendees ?? 0),
         price: Number(event.price ?? 0),
-      }))
-    ),
+      }));
+    }),
 
   getEventDetail: (eventId: string) =>
     apiClient.get(`/events/${eventId}`),
@@ -484,7 +492,7 @@ export const adminApi = {
   getSettings: () =>
     apiClient.get('/admin/settings'),
 
-  updateSettings: (data: Record<string, unknown>) =>
+  updateSettings: (data: Record<string, unknown> | object) =>
     apiClient.put('/admin/settings', data),
 
   listPricingTiers: () =>
