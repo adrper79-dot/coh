@@ -5,6 +5,7 @@ import { eq, and, desc, gte, lte, count } from 'drizzle-orm';
 import { createDb } from '../db';
 import { appointments, services, availabilitySlots, activityLog } from '../db/schema';
 import { authMiddleware, adminOnly } from '../middleware/auth';
+import { appointmentTransition, type AppointmentStatus } from '../lib/state-machines';
 import type { Env, Variables } from '../types/env';
 
 const adminBooking = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -51,8 +52,32 @@ adminBooking.patch('/appointments/:id', zValidator('json', z.object({
   const updates = c.req.valid('json');
   const db = createDb(c.env.DATABASE_URL ?? c.env.HYPERDRIVE);
 
+  // If status is changing, enforce the state machine. Without this guard,
+  // a cancelled or completed appointment could be silently flipped back to
+  // confirmed via the admin UI.
+  let statusPatch: { status?: AppointmentStatus; completedAt?: Date } = {};
+  if (updates.status) {
+    const [current] = await db
+      .select({ status: appointments.status })
+      .from(appointments)
+      .where(eq(appointments.id, id))
+      .limit(1);
+    if (!current) return c.json({ error: 'Appointment not found' }, 404);
+
+    const result = appointmentTransition(
+      current.status as AppointmentStatus,
+      updates.status,
+      new Date(),
+    );
+    if (!result.ok) {
+      return c.json({ error: result.reason }, 409);
+    }
+    statusPatch = result.patch;
+  }
+
+  const { status: _ignoreInputStatus, ...rest } = updates;
   const [updated] = await db.update(appointments)
-    .set({ ...updates, updatedAt: new Date() })
+    .set({ ...rest, ...statusPatch, updatedAt: new Date() })
     .where(eq(appointments.id, id))
     .returning();
 
