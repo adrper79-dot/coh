@@ -1,0 +1,87 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same PR when a new push lands.
+concurrency:
+  group: pr-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (typecheck / test / build)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Backend typecheck
+        run: npm run typecheck
+
+      - name: Backend tests
+        run: npm test -- --run
+
+      # Wrangler dry-run validates wrangler.jsonc + bundles the worker, which
+      # is the closest analogue to a "backend build" we have. Falls back to a
+      # plain `wrangler deploy --dry-run` if `npm run build` isn't defined.
+      - name: Backend build (wrangler dry-run)
+        run: npx wrangler deploy --dry-run --outdir=dist
+        env:
+          # Wrangler needs these to be present (any value) for dry-run when the
+          # config references them; the actual deploy is performed by deploy.yml.
+          CLOUDFLARE_API_TOKEN: dry-run-no-deploy
+          CLOUDFLARE_ACCOUNT_ID: dry-run-no-deploy
+
+  frontend:
+    name: Frontend (typecheck / build / lint)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./web
+        run: npm ci
+
+      - name: Frontend typecheck
+        working-directory: ./web
+        run: npm run type-check
+
+      - name: Frontend lint
+        working-directory: ./web
+        run: npm run lint
+
+      - name: Frontend build
+        working-directory: ./web
+        env:
+          # Production-mirror value; pr-check.yml never deploys, but the build
+          # must succeed against a real-looking API URL so the workers.dev
+          # fallback can never reappear.
+          VITE_API_URL: https://api.cypherofhealing.com/api
+        run: npm run build
