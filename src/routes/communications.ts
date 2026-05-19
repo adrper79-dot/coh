@@ -4,20 +4,14 @@ import { z } from 'zod';
 import { eq, and, desc, lte, gte, isNull } from 'drizzle-orm';
 import { createDb } from '../db';
 import { appointments, events, eventRegistrations, users } from '../db/schema';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, adminOnly } from '../middleware/auth';
 import { sendSms, createRTCRoom, buildAppointmentReminder, buildEventReminder, formatPhoneForSms } from '../utils/telnyx';
 import type { Env, Variables } from '../types/env';
 
 const comms = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // ─── Admin: Send appointment reminders ───
-comms.post('/appointments/send-reminders', authMiddleware, async (c) => {
-  // Check admin role
-  const role = c.get('userRole');
-  if (role !== 'admin') {
-    return c.json({ error: 'Unauthorized' }, 403);
-  }
-
+comms.post('/appointments/send-reminders', authMiddleware, adminOnly, async (c) => {
   const db = createDb(c.env.DATABASE_URL ?? c.env.HYPERDRIVE);
 
   // Get appointments in next 24 hours that haven't been reminded
@@ -85,12 +79,7 @@ comms.post('/appointments/send-reminders', authMiddleware, async (c) => {
 });
 
 // ─── Admin: Send event reminders ───
-comms.post('/events/send-reminders', authMiddleware, async (c) => {
-  const role = c.get('userRole');
-  if (role !== 'admin') {
-    return c.json({ error: 'Unauthorized' }, 403);
-  }
-
+comms.post('/events/send-reminders', authMiddleware, adminOnly, async (c) => {
   const db = createDb(c.env.DATABASE_URL ?? c.env.HYPERDRIVE);
 
   // Get events in next 24 hours whose registrants haven't been reminded
@@ -156,14 +145,11 @@ comms.post('/events/send-reminders', authMiddleware, async (c) => {
 comms.post(
   '/events/:eventId/video-room',
   authMiddleware,
+  adminOnly,
   zValidator('param', z.object({ eventId: z.string().uuid() })),
   async (c) => {
-    const role = c.get('userRole');
-    if (role !== 'admin') {
-      return c.json({ error: 'Unauthorized' }, 403);
-    }
-
-    const { eventId } = c.req.valid('param');  const userId = c.get('userId');    const db = createDb(c.env.DATABASE_URL ?? c.env.HYPERDRIVE);
+    const { eventId } = c.req.valid('param');
+    const db = createDb(c.env.DATABASE_URL ?? c.env.HYPERDRIVE);
 
     const [event] = await db.select().from(events).where(eq(events.id, eventId)).limit(1);
     if (!event) {
@@ -203,8 +189,8 @@ comms.post(
   }
 );
 
-// ─── Public: Get event video room (authenticated user only) ───
-comms.get('/events/:eventId/video-room', async (c) => {
+// ─── Authenticated user: Get event video room (registrants only) ───
+comms.get('/events/:eventId/video-room', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const { eventId } = c.req.param();
 

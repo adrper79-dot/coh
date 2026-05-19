@@ -17,49 +17,36 @@
 
 ## 📚 Documentation
 
-- **[DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md)** - ⭐ START HERE - Complete deployment checklist
-- **[API-TOKEN-SETUP.md](API-TOKEN-SETUP.md)** - Configure Cloudflare API token with correct permissions
-- **[CLOUDFLARE-PAGES-FIX.md](CLOUDFLARE-PAGES-FIX.md)** - Dashboard configuration for Pages
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Step-by-step deployment guide
-- **[DEPLOYMENT-STATUS.md](DEPLOYMENT-STATUS.md)** - Complete build & deployment status  
-- **[GITHUB-ACTIONS-SETUP.md](GITHUB-ACTIONS-SETUP.md)** - Auto-deployment configuration
+- **[CLAUDE.md](CLAUDE.md)** - ⭐ START HERE - Standing orders, stack, surfaces, schema
+- **[GETTING-STARTED.md](GETTING-STARTED.md)** - Local development setup
 - **[SECURITY.md](SECURITY.md)** - Security best practices
 - **[FULLSTACK-README.md](FULLSTACK-README.md)** - Full architecture guide
-- **[GETTING-STARTED.md](GETTING-STARTED.md)** - Local development setup
+- **[MEDIA-MANAGEMENT.md](MEDIA-MANAGEMENT.md)** - Media uploads + R2
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** - Engineering plan
+- **[docs/archive/](docs/archive/)** - Point-in-time deployment & audit snapshots (historical reference)
 
 ## ⚡ Quick Deploy
 
 ### ✅ Current Status
-- Frontend build: **✅ Verified working** (`web/dist/` created)
-- Backend TypeScript: **✅ Verified compiling** (no errors)
-- GitHub Actions: **✅ Configured** (auto-deploy on push)
-- Missing: Cloudflare API token with correct permissions
-
-### 🚀 Next Steps
-1. **[Read DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md)** (5-minute master checklist)
-2. Create Cloudflare API token with Pages + Workers permissions
-3. Update GitHub secrets: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
-4. Push a commit to trigger auto-deployment
+- Backend API: deployed at `cypher-of-healing-api.adrper79.workers.dev`
+- Frontend: deployed via Cloudflare Pages
+- Auto-deploy: GitHub Actions on push to `main`
 
 ### Manual Commands
 ```bash
 # Test local build
-cd web && npm run build  # Frontend ✅
-npm run tsc --noEmit     # Backend ✅
+cd web && npm run build  # Frontend
+npx tsc --noEmit         # Backend
 
 # Deploy manually (when ready)
-npx wrangler deploy      # Deploy API
-cd web && npx wrangler pages deploy dist --project-name coh  # Deploy frontend
-``
-npm run tsc --noEmit     # Backend ✅
+npx wrangler deploy                                            # Deploy API
+cd web && npx wrangler pages deploy dist --project-name coh    # Deploy frontend
+```
 
-# Deploy manually (when ready)
-npx wrangler deploy      # Deploy API
-cd web && npx wrangler pages deploy dist --project-name coh  # Deploy frontend
-``
-2. Click "Connect to Git"
-3. Select this repository
-4. Set build: `cd web && npm run build` → output: `web/dist`
+Cloudflare Pages dashboard (alternative to manual deploy):
+1. Connect to Git
+2. Select this repository
+3. Set build: `cd web && npm run build` → output: `web/dist`
 
 ## 🏗️ Project Structure
 
