@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import { createDb } from '../db';
 import { activityLog, appointments, enrollments, eventRegistrations, events, membershipPlans, orders, services, subscriptions, users } from '../db/schema';
 import { bookingConfirmationEmail, eventRegistrationEmail, sendEmail } from '../utils/email';
+import { mapStripeSubscriptionStatus } from '../lib/state-machines';
 import type { Env, Variables } from '../types/env';
 
 const webhooks = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -497,7 +498,10 @@ webhooks.post('/stripe', async (c) => {
       .limit(1);
 
     if (existing) {
-      const newStatus = sub.cancel_at_period_end ? 'cancelled' : (sub.status === 'active' ? 'active' : sub.status as 'past_due' | 'paused');
+      // Stripe's status enum is wider than our DB enum (incomplete, unpaid,
+      // trialing, canceled-with-one-l, etc.). Fold them down via the shared
+      // helper instead of an unsafe cast that silently mis-stores values.
+      const newStatus = mapStripeSubscriptionStatus(sub.status, sub.cancel_at_period_end);
       await db.update(subscriptions)
         .set({
           status: newStatus,
