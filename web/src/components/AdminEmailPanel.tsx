@@ -103,7 +103,7 @@ export default function AdminEmailPanel() {
                     : '#999',
           }}
         >
-          {value}
+          {String(value)}
         </span>
       ),
     },
